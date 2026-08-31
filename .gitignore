@@ -4,6 +4,7 @@ android/.idea/
 android/local.properties
 android/**/build/
 android/.kotlin/
+artifacts/
 
 # IntelliJ / Android Studio
 *.iml
