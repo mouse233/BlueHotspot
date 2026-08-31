@@ -2,11 +2,11 @@ import CoreBluetooth
 import Foundation
 
 struct BleUuids {
-    static let service = CBUUID(string: "8B5F0001-7D3E-4E4A-9F1C-4B20F4E9A001")
-    static let deviceInfo = CBUUID(string: "8B5F0002-7D3E-4E4A-9F1C-4B20F4E9A001")
-    static let command = CBUUID(string: "8B5F0003-7D3E-4E4A-9F1C-4B20F4E9A001")
-    static let event = CBUUID(string: "8B5F0004-7D3E-4E4A-9F1C-4B20F4E9A001")
-    static let pairing = CBUUID(string: "8B5F0005-7D3E-4E4A-9F1C-4B20F4E9A001")
+    nonisolated(unsafe) static let service = CBUUID(string: "8B5F0001-7D3E-4E4A-9F1C-4B20F4E9A001")
+    nonisolated(unsafe) static let deviceInfo = CBUUID(string: "8B5F0002-7D3E-4E4A-9F1C-4B20F4E9A001")
+    nonisolated(unsafe) static let command = CBUUID(string: "8B5F0003-7D3E-4E4A-9F1C-4B20F4E9A001")
+    nonisolated(unsafe) static let event = CBUUID(string: "8B5F0004-7D3E-4E4A-9F1C-4B20F4E9A001")
+    nonisolated(unsafe) static let pairing = CBUUID(string: "8B5F0005-7D3E-4E4A-9F1C-4B20F4E9A001")
 }
 
 enum BleMessage: UInt8 {
@@ -83,5 +83,6 @@ struct BleFrameDecoder {
         return frames
     }
 }
+
 
 
