@@ -44,9 +44,9 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
                 } else {
-                    ForEach(Array(bluetooth.discoveredDevices.enumerated()), id: \.element.id) { index, device in
+                    ForEach(bluetooth.discoveredDevices) { device in
                         deviceRow(device)
-                        if index < bluetooth.discoveredDevices.count - 1 {
+                        if device.id != bluetooth.discoveredDevices.last?.id {
                             rowDivider
                         }
                     }
@@ -192,7 +192,7 @@ struct HomeView: View {
                 }
             }
             .buttonStyle(.plain)
-            .tint(.tint)
+            .tint(.blue)
             .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
