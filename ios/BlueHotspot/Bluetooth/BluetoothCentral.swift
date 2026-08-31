@@ -2,15 +2,24 @@ import CoreBluetooth
 import Combine
 import Foundation
 
+struct DiscoveredBluetoothDevice: Identifiable, Equatable {
+    let id: UUID
+    let name: String
+    let rssi: Int
+}
+
 final class BluetoothCentral: NSObject, ObservableObject {
     @Published private(set) var state: CBManagerState = .unknown
     @Published private(set) var isConnected = false
     @Published private(set) var hotspotState = "Unknown"
     @Published private(set) var lastError: String?
     @Published private(set) var deviceName: String?
+    @Published private(set) var discoveredDevices: [DiscoveredBluetoothDevice] = []
+    @Published private(set) var connectingDeviceID: UUID?
 
     private var manager: CBCentralManager!
     private var peripheral: CBPeripheral?
+    private var discoveredPeripherals: [UUID: CBPeripheral] = [:]
     private var commandCharacteristic: CBCharacteristic?
     private var eventCharacteristic: CBCharacteristic?
     private var decoder = BleFrameDecoder()
@@ -28,10 +37,46 @@ final class BluetoothCentral: NSObject, ObservableObject {
             lastError = "Bluetooth is unavailable"
             return
         }
-        manager.scanForPeripherals(withServices: [BleUuids.service], options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+        manager.stopScan()
+        discoveredDevices.removeAll()
+        discoveredPeripherals.removeAll()
+        manager.scanForPeripherals(
+            withServices: [BleUuids.service],
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: false],
+        )
+    }
+
+    func connect(to device: DiscoveredBluetoothDevice) {
+        guard manager.state == .poweredOn else {
+            lastError = "Bluetooth is unavailable"
+            return
+        }
+        guard let peripheral = discoveredPeripherals[device.id] else {
+            lastError = "Device is no longer available"
+            return
+        }
+
+        manager.stopScan()
+        lastError = nil
+        connectingDeviceID = device.id
+        deviceName = device.name
+
+        if let current = self.peripheral, current.identifier != device.id, current.state != .disconnected {
+            manager.cancelPeripheralConnection(current)
+        }
+
+        self.peripheral = peripheral
+        if peripheral.state == .connected {
+            isConnected = true
+            connectingDeviceID = nil
+            sendHelloIfReady()
+            return
+        }
+        manager.connect(peripheral, options: nil)
     }
 
     func disconnect() {
+        connectingDeviceID = nil
         if let peripheral { manager.cancelPeripheralConnection(peripheral) }
     }
 
@@ -96,6 +141,17 @@ final class BluetoothCentral: NSObject, ObservableObject {
             break
         }
     }
+
+    private func updateDiscoveredDevice(_ device: DiscoveredBluetoothDevice) {
+        if let index = discoveredDevices.firstIndex(where: { $0.id == device.id }) {
+            discoveredDevices[index] = device
+        } else {
+            discoveredDevices.append(device)
+        }
+        discoveredDevices.sort {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
 }
 
 extension BluetoothCentral: CBCentralManagerDelegate {
@@ -104,37 +160,57 @@ extension BluetoothCentral: CBCentralManagerDelegate {
         if central.state != .poweredOn {
             isConnected = false
             hotspotState = "Unknown"
+            connectingDeviceID = nil
+            discoveredDevices.removeAll()
+            discoveredPeripherals.removeAll()
         }
     }
 
-    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        manager.stopScan()
-        self.peripheral = peripheral
-        deviceName = peripheral.name ?? "Android device"
-        peripheral.delegate = self
-        manager.connect(peripheral, options: nil)
+    func centralManager(
+        _ central: CBCentralManager,
+        didDiscover peripheral: CBPeripheral,
+        advertisementData: [String: Any],
+        rssi RSSI: NSNumber,
+    ) {
+        discoveredPeripherals[peripheral.identifier] = peripheral
+        let name = peripheral.name
+            ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String)
+            ?? "Android device"
+        updateDiscoveredDevice(
+            DiscoveredBluetoothDevice(id: peripheral.identifier, name: name, rssi: RSSI.intValue),
+        )
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         isConnected = true
+        connectingDeviceID = nil
         lastError = nil
+        deviceName = peripheral.name ?? deviceName ?? "Android device"
         helloSent = false
         decoder = BleFrameDecoder()
         writeQueue.removeAll()
         writeInProgress = false
+        peripheral.delegate = self
         peripheral.discoverServices([BleUuids.service])
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        isConnected = false
+        if self.peripheral?.identifier == peripheral.identifier {
+            isConnected = false
+            connectingDeviceID = nil
+        }
         lastError = error?.localizedDescription ?? "Unable to connect"
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        isConnected = false
-        commandCharacteristic = nil
-        eventCharacteristic = nil
-        helloSent = false
+        if self.peripheral?.identifier == peripheral.identifier {
+            isConnected = false
+            commandCharacteristic = nil
+            eventCharacteristic = nil
+            helloSent = false
+            connectingDeviceID = nil
+            self.peripheral = nil
+        }
         if let error { lastError = error.localizedDescription }
     }
 }

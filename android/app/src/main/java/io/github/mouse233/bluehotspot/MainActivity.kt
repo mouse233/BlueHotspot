@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.github.mouse233.bluehotspot.ble.BleControlForegroundService
@@ -30,7 +30,10 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                AppViewModel(app.tetheringController) as T
+                AppViewModel(
+                    app.tetheringController,
+                    app.bleGattServer.connectedDevices,
+                ) as T
         }
     }
 
@@ -39,8 +42,10 @@ class MainActivity : ComponentActivity() {
         startBleIfPermitted()
         setContent {
             val state by viewModel.state.collectAsState()
+            val connectedDevices by viewModel.connectedDevices.collectAsState()
             HomeScreen(
                 state = state,
+                connectedDevices = connectedDevices,
                 onStart = viewModel::start,
                 onStop = viewModel::stop,
             )
@@ -67,4 +72,3 @@ class MainActivity : ComponentActivity() {
         BleControlForegroundService.start(this)
     }
 }
-

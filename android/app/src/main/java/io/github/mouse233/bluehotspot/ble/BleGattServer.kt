@@ -37,6 +37,11 @@ internal sealed interface BlePeripheralState {
     data class Failed(val reason: String) : BlePeripheralState
 }
 
+data class BleConnectedDevice(
+    val address: String,
+    val name: String,
+)
+
 /** Android BLE peripheral for the deliberately small, hotspot-only v1 API. */
 @SuppressLint("MissingPermission")
 internal class BleGattServer(
@@ -52,7 +57,11 @@ internal class BleGattServer(
     private val _state = MutableStateFlow<BlePeripheralState>(BlePeripheralState.Stopped)
     val state: StateFlow<BlePeripheralState> = _state.asStateFlow()
 
+    private val _connectedDevices = MutableStateFlow<List<BleConnectedDevice>>(emptyList())
+    val connectedDevices: StateFlow<List<BleConnectedDevice>> = _connectedDevices.asStateFlow()
+
     private val decoders = mutableMapOf<String, BleFrameDecoder>()
+    private val connectedDevicesByAddress = mutableMapOf<String, BluetoothDevice>()
     private val subscribedDevices = mutableSetOf<String>()
     private var server: BluetoothGattServer? = null
     private var advertiser: BluetoothLeAdvertiser? = null
@@ -63,10 +72,13 @@ internal class BleGattServer(
             synchronized(decoders) {
                 if (newState == BluetoothGatt.STATE_CONNECTED) {
                     decoders[device.address] = BleFrameDecoder()
+                    connectedDevicesByAddress[device.address] = device
                 } else {
                     decoders.remove(device.address)
+                    connectedDevicesByAddress.remove(device.address)
                     subscribedDevices.remove(device.address)
                 }
+                publishConnectedDevicesLocked()
             }
         }
 
@@ -220,7 +232,9 @@ internal class BleGattServer(
         server = null
         synchronized(decoders) {
             decoders.clear()
+            connectedDevicesByAddress.clear()
             subscribedDevices.clear()
+            publishConnectedDevicesLocked()
         }
         _state.value = BlePeripheralState.Stopped
     }
@@ -274,6 +288,17 @@ internal class BleGattServer(
                 BluetoothAdapter.getDefaultAdapter()?.getRemoteDevice(address)?.let { send(it, frame) }
             }
         }
+    }
+
+    private fun publishConnectedDevicesLocked() {
+        _connectedDevices.value = connectedDevicesByAddress.values
+            .map { device ->
+                BleConnectedDevice(
+                    address = device.address,
+                    name = device.name ?: "iPhone",
+                )
+            }
+            .sortedBy { it.name.lowercase() }
     }
 
     private fun sendStatus(device: BluetoothDevice, requestId: UUID, state: TetheringState) {

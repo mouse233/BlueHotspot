@@ -17,6 +17,7 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         header
+                        deviceListCard
                         statusCard
                         actionCard
 
@@ -39,9 +40,74 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Hotspot control")
                 .font(.largeTitle.bold())
-            Text("Control your Android hotspot securely over Bluetooth")
+            Text("Choose a trusted Android device to control over Bluetooth")
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var deviceListCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Android devices")
+                    .font(.headline)
+                Spacer()
+                if bluetooth.discoveredDevices.isEmpty == false {
+                    Text("\(bluetooth.discoveredDevices.count)")
+                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
+                }
+            }
+
+            if bluetooth.discoveredDevices.isEmpty {
+                Label("No Android devices found", systemImage: "antenna.radiowaves.left.and.right")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                ForEach(bluetooth.discoveredDevices) { device in
+                    Button {
+                        bluetooth.connect(to: device)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                                .frame(width: 28)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(device.name)
+                                    .font(.body.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                Text(device.rssi == 0 ? "Signal unavailable" : "\(device.rssi) dBm")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            if bluetooth.connectingDeviceID == device.id {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else if bluetooth.isConnected && bluetooth.deviceName == device.name {
+                                Text("Connected")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.green)
+                            } else {
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.vertical, 6)
+                }
+            }
+
+            glassButton("Scan again", systemImage: "arrow.clockwise") {
+                bluetooth.startScanning()
+            }
+        }
+        .glassCard()
     }
 
     private var statusCard: some View {
