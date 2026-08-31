@@ -55,7 +55,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent build/Payload build/BlueHotspot-unsigned.ipa
 
       - name: Upload unsigned IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: BlueHotspot-unsigned-ipa
           path: ios/build/BlueHotspot-unsigned.ipa
