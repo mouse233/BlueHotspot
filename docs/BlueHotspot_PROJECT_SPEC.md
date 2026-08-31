@@ -43,7 +43,7 @@ Use the latest modern native Android stack.
 - Dependency management: **Version Catalog**
 - Kotlin: **2.4.10 stable**
 - Compose BOM: **2026.08.00**
-- `compileSdk`: **37**
+- `compileSdk`: **36**
 - `targetSdk`: **36**
 - `minSdk`: **36**
 
@@ -2045,9 +2045,9 @@ Companion Device APIs
 
 https://developer.android.com/reference/android/companion/package-summary
 
-Android 17 SDK
+Android 16 SDK
 
-https://developer.android.com/about/versions/17/setup-sdk
+https://developer.android.com/about/versions/16/setup-sdk
 
 Compose
 
@@ -2098,7 +2098,7 @@ Requirements:
    - Material 3
    - Gradle Kotlin DSL
    - Version Catalog
-   - compileSdk 37
+   - compileSdk 36
    - targetSdk 36
    - minSdk 36
 

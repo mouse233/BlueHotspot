@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.bluehotspot"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.bluehotspot"
