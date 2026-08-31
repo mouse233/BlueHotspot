@@ -19,6 +19,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_EMIT_LOC_STRINGS: YES
     info:
+      path: BlueHotspot/Info.plist
       properties:
         CFBundleDisplayName: BlueHotspot
         NSBluetoothAlwaysUsageDescription: BlueHotspot uses Bluetooth to control a trusted Android device.
