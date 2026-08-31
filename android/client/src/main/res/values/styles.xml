@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.BlueHotspot" parent="android:style/Theme.Material.Light.NoActionBar" />
+</resources>

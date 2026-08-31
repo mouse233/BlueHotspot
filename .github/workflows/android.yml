@@ -48,11 +48,17 @@ jobs:
       - name: Unit tests
         run: gradle test
 
-      - name: Assemble debug APK
+      - name: Assemble debug APKs
         run: gradle assembleDebug
 
-      - name: Upload Android APK
+      - name: Upload Android server APK
         uses: actions/upload-artifact@v6
         with:
-          name: BlueHotspot-android-debug
+          name: BlueHotspot-android-server-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Android client APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: BlueHotspot-android-client-debug
+          path: android/client/build/outputs/apk/debug/client-debug.apk

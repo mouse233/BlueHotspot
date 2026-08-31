@@ -10,7 +10,7 @@ The project is split into a hotspot server and controller clients:
   hotspot through the existing root-powered tethering integration.
 - iOS client — scans for BlueHotspot Android devices, lets the user choose a
   device, connects over BLE, and sends hotspot commands.
-- Android client — reserved for a future controller app.
+- Android client — scans for the Android server and controls its configured hotspot over encrypted BLE.
 
 ## Current status
 
@@ -23,6 +23,7 @@ The MVP control loop is implemented:
 - iOS displays discovered Android devices, signal strength, connection state,
   and hotspot state.
 - Android displays connected iPhone devices in its local UI.
+- Android client displays nearby BlueHotspot servers, pairs through the system Bluetooth flow, and controls the server hotspot.
 - The iOS home screen uses Liquid Glass on iOS 26 and a material fallback on
   older supported iOS versions.
 - Protocol framing, fragmentation, and Android unit tests are included.
@@ -34,7 +35,7 @@ Android device and reports the result.
 ## Package identifiers
 
 - Android server: `io.github.mouse233.bluehotspot.server`
-- Future Android client: `io.github.mouse233.bluehotspot.client`
+- Android client: `io.github.mouse233.bluehotspot.client`
 - iOS client: `io.github.mouse233.bluehotspot.client.ios`
 
 ## Requirements
@@ -70,7 +71,7 @@ signing workflow are configured.
 
 ## Repository layout
 
-- `android/` — Android server application and root tethering integration.
+- `android/` — Android server (`:app`) and Android controller client (`:client`) applications.
 - `ios/` — SwiftUI iOS controller and XcodeGen specification.
 - `protocol/` — platform-neutral BLE protocol and framing documentation.
 - `docs/` — architecture and project scope documentation.
