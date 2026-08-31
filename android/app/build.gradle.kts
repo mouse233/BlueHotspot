@@ -4,9 +4,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val compileSdkVersion = providers.gradleProperty("android.compileSdk")
+    .map(String::toInt)
+    .getOrElse(37)
+
 android {
     namespace = "com.example.bluehotspot"
-    compileSdk = 37
+    compileSdk = compileSdkVersion
 
     defaultConfig {
         applicationId = "com.example.bluehotspot"
