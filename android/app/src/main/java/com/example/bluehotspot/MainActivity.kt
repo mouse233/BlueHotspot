@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.bluehotspot.ble.BleControlForegroundService
 import com.example.bluehotspot.ui.AppViewModel
 import com.example.bluehotspot.ui.HomeScreen
 
@@ -48,10 +49,13 @@ class MainActivity : ComponentActivity() {
 
     private fun startBleIfPermitted() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val required = arrayOf(
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-            )
+            val required = buildList {
+                add(Manifest.permission.BLUETOOTH_CONNECT)
+                add(Manifest.permission.BLUETOOTH_ADVERTISE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
             val missing = required.filter {
                 checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
             }
@@ -60,6 +64,6 @@ class MainActivity : ComponentActivity() {
                 return
             }
         }
-        app.bleGattServer.start()
+        BleControlForegroundService.start(this)
     }
 }
