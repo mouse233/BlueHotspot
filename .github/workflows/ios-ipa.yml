@@ -1,0 +1,55 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-ipa:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Archive iOS app without signing
+        run: |
+          xcodebuild \
+            -project BlueHotspot.xcodeproj \
+            -scheme BlueHotspot \
+            -sdk iphoneos \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/BlueHotspot.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/BlueHotspot.xcarchive/Products/Applications/BlueHotspot.app build/Payload/
+          ditto -c -k --sequesterRsrc --keepParent build/Payload build/BlueHotspot-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlueHotspot-unsigned-ipa
+          path: ios/build/BlueHotspot-unsigned.ipa

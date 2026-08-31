@@ -1,0 +1,24 @@
+# Android / Gradle
+.gradle/
+android/.idea/
+android/local.properties
+android/**/build/
+android/.kotlin/
+
+# IntelliJ / Android Studio
+*.iml
+.idea/
+
+# Apple / Xcode
+ios/.build/
+ios/build/
+ios/BlueHotspot.xcodeproj/
+ios/DerivedData/
+ios/*.xcuserstate
+ios/**/*.xcuserstate
+ios/*.xcworkspace/xcuserdata/
+ios/**/*.xcodeproj/xcuserdata/
+
+# OS files
+.DS_Store
+Thumbs.db
