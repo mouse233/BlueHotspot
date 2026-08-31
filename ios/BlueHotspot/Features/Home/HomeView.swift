@@ -7,208 +7,242 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    deviceListCard
-                    statusCard
-                    actionCard
+                VStack(alignment: .leading, spacing: 28) {
+                    deviceSection
+                    connectionSection
+                    controlsSection
 
                     if let error = bluetooth.lastError {
-                        Text(error)
-                            .foregroundStyle(.red)
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
                             .font(.footnote)
+                            .foregroundStyle(.red)
                             .padding(.horizontal, 4)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("BlueHotspot")
+            .navigationBarTitleDisplayMode(.large)
             .onAppear { bluetooth.startScanning() }
         }
     }
 
-    private var deviceListCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Android devices")
-                    .font(.headline)
-                Spacer()
-                if bluetooth.discoveredDevices.isEmpty == false {
-                    Text("\(bluetooth.discoveredDevices.count)")
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-                }
-            }
-
-            if bluetooth.discoveredDevices.isEmpty {
-                Label("No Android devices found", systemImage: "antenna.radiowaves.left.and.right")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                ForEach(bluetooth.discoveredDevices) { device in
-                    Button {
-                        bluetooth.connect(to: device)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                                .font(.title3)
-                                .foregroundStyle(.tint)
-                                .frame(width: 28)
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(device.name)
-                                    .font(.body.weight(.medium))
-                                    .foregroundStyle(.primary)
-                                Text(device.rssi == 0 ? "Signal unavailable" : "\(device.rssi) dBm")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            if bluetooth.connectingDeviceID == device.id {
-                                ProgressView()
-                                    .controlSize(.small)
-                            } else if bluetooth.isConnected && bluetooth.deviceName == device.name {
-                                Text("Connected")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.green)
-                            } else {
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.vertical, 6)
-                }
-            }
-
-            glassButton("Scan again", systemImage: "arrow.clockwise") {
-                bluetooth.startScanning()
-            }
-
-            Toggle(isOn: $bluetooth.autoConnectEnabled) {
-                Label("Automatic connection", systemImage: "bolt.horizontal.circle")
-            }
-            .tint(.green)
-
-            Text("Reconnect to the last selected Android device when it is available.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .glassCard()
-    }
-
-    private var statusCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label(
-                bluetooth.isConnected ? (bluetooth.deviceName ?? "Android device") : "No Android device",
-                systemImage: bluetooth.isConnected ? "checkmark.circle.fill" : "dot.radiowaves.left.and.right",
+    private var deviceSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(
+                "Android devices",
+                systemImage: "antenna.radiowaves.left.and.right",
+                count: bluetooth.discoveredDevices.count,
             )
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(bluetooth.isConnected ? .green : .primary)
 
-            Divider()
+            VStack(spacing: 0) {
+                if bluetooth.discoveredDevices.isEmpty {
+                    Label("No Android devices found", systemImage: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                } else {
+                    ForEach(Array(bluetooth.discoveredDevices.enumerated()), id: \.element.id) { index, device in
+                        deviceRow(device)
+                        if index < bluetooth.discoveredDevices.count - 1 {
+                            rowDivider
+                        }
+                    }
+                }
 
-            statusRow("Bluetooth", value: bluetooth.state.label)
-            statusRow("Hotspot", value: bluetooth.hotspotState)
+                rowDivider
+
+                Button {
+                    bluetooth.startScanning()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "arrow.clockwise")
+                            .frame(width: 28)
+                        Text("Scan again")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tint)
+                .padding(16)
+
+                rowDivider
+
+                Toggle(isOn: $bluetooth.autoConnectEnabled) {
+                    Label("Automatic connection", systemImage: "bolt.horizontal.circle")
+                }
+                .tint(.green)
+                .padding(16)
+            }
+            .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
-        .glassCard()
     }
 
-    private var actionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Controls")
+    private func deviceRow(_ device: DiscoveredBluetoothDevice) -> some View {
+        Button {
+            bluetooth.connect(to: device)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(device.name)
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.primary)
+                    Text(device.rssi == 0 ? "Signal unavailable" : "\(device.rssi) dBm")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if bluetooth.connectingDeviceID == device.id {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if bluetooth.isConnected && bluetooth.deviceName == device.name {
+                    Text("Connected")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.green)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(16)
+    }
+
+    private var connectionSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Connection", systemImage: "link")
+
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    Image(systemName: bluetooth.isConnected ? "checkmark.circle.fill" : "circle.dashed")
+                        .font(.title3)
+                        .foregroundStyle(bluetooth.isConnected ? .green : .secondary)
+                        .frame(width: 28)
+
+                    Text(bluetooth.isConnected ? (bluetooth.deviceName ?? "Android device") : "No Android device")
+                        .font(.body.weight(.medium))
+
+                    Spacer()
+                }
+                .padding(16)
+
+                rowDivider
+                statusRow("Bluetooth", value: bluetooth.state.label)
+                rowDivider
+                statusRow("Hotspot", value: bluetooth.hotspotState)
+            }
+            .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+
+    private var controlsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Controls", systemImage: "slider.horizontal.3")
+
+            VStack(spacing: 0) {
+                if bluetooth.isConnected {
+                    Button {
+                        bluetooth.startHotspot()
+                    } label: {
+                        controlRow("Start hotspot", systemImage: "power")
+                    }
+                    .disabled(bluetooth.hotspotState == "STARTING" || bluetooth.hotspotState == "ACTIVE")
+
+                    rowDivider
+
+                    Button {
+                        bluetooth.stopHotspot()
+                    } label: {
+                        controlRow("Stop hotspot", systemImage: "stop.fill")
+                    }
+                    .disabled(bluetooth.hotspotState != "ACTIVE")
+
+                    rowDivider
+
+                    Button(role: .destructive) {
+                        bluetooth.disconnect()
+                    } label: {
+                        controlRow("Disconnect", systemImage: "xmark.circle")
+                    }
+                } else {
+                    Button {
+                        bluetooth.startScanning()
+                    } label: {
+                        controlRow("Scan for Android device", systemImage: "magnifyingglass")
+                    }
+                    .disabled(bluetooth.state != .poweredOn)
+                }
+            }
+            .buttonStyle(.plain)
+            .tint(.tint)
+            .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+
+    private func sectionHeader(_ title: String, systemImage: String, count: Int? = nil) -> some View {
+        HStack(spacing: 8) {
+            Label(title, systemImage: systemImage)
                 .font(.headline)
+                .foregroundStyle(.secondary)
 
-            if bluetooth.isConnected {
-                glassButton("Start hotspot", systemImage: "power", prominent: true) {
-                    bluetooth.startHotspot()
-                }
-                .disabled(bluetooth.hotspotState == "STARTING" || bluetooth.hotspotState == "ACTIVE")
+            Spacer()
 
-                glassButton("Stop hotspot", systemImage: "stop.fill") {
-                    bluetooth.stopHotspot()
-                }
-                .disabled(bluetooth.hotspotState != "ACTIVE")
-
-                Button("Disconnect", systemImage: "xmark.circle") {
-                    bluetooth.disconnect()
-                }
-                .buttonStyle(.borderless)
-                .frame(maxWidth: .infinity)
-            } else {
-                glassButton(
-                    "Scan for Android device",
-                    systemImage: "dot.radiowaves.left.and.right",
-                    prominent: true,
-                ) {
-                    bluetooth.startScanning()
-                }
-                .disabled(bluetooth.state != .poweredOn)
+            if let count {
+                Text("\(count)")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
             }
         }
-        .glassCard()
+        .padding(.horizontal, 4)
     }
 
     private func statusRow(_ title: String, value: String) -> some View {
-        LabeledContent {
+        HStack {
+            Text(title)
+            Spacer()
             Text(value)
                 .foregroundStyle(.secondary)
-        } label: {
+        }
+        .padding(16)
+    }
+
+    private func controlRow(_ title: String, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .frame(width: 28)
             Text(title)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
+        .foregroundStyle(.tint)
+        .contentShape(Rectangle())
+        .padding(16)
     }
 
-    @ViewBuilder
-    private func glassButton(
-        _ title: String,
-        systemImage: String,
-        prominent: Bool = false,
-        action: @escaping () -> Void,
-    ) -> some View {
-        if #available(iOS 26.0, *) {
-            if prominent {
-                Button(title, systemImage: systemImage, action: action)
-                    .buttonStyle(.glassProminent)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Button(title, systemImage: systemImage, action: action)
-                    .buttonStyle(.glass)
-                    .frame(maxWidth: .infinity)
-            }
-        } else {
-            if prominent {
-                Button(title, systemImage: systemImage, action: action)
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Button(title, systemImage: systemImage, action: action)
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-}
-
-private struct GlassCardModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content
-                .padding(20)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        } else {
-            content
-                .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        }
-    }
-}
-
-private extension View {
-    func glassCard() -> some View {
-        modifier(GlassCardModifier())
+    private var rowDivider: some View {
+        Divider()
+            .padding(.leading, 56)
     }
 }
 
