@@ -25,6 +25,18 @@ struct HomeView: View {
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("BlueHotspot")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Toggle(isOn: $bluetooth.autoConnectEnabled) {
+                            Label("Automatic connection", systemImage: "bolt.horizontal.circle")
+                        }
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
+            }
             .onAppear { bluetooth.startScanning() }
         }
     }
@@ -70,14 +82,6 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.tint)
-                .padding(16)
-
-                rowDivider
-
-                Toggle(isOn: $bluetooth.autoConnectEnabled) {
-                    Label("Automatic connection", systemImage: "bolt.horizontal.circle")
-                }
-                .tint(.green)
                 .padding(16)
             }
             .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -212,7 +216,7 @@ struct HomeView: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 16)
     }
 
     private func statusRow(_ title: String, value: String) -> some View {

@@ -37,7 +37,6 @@ final class BluetoothCentral: NSObject, ObservableObject {
     private var automaticConnectionAttempted = false
 
     private static let preferredDeviceIDKey = "preferredBluetoothDeviceID"
-    private static let preferredDeviceNameKey = "preferredBluetoothDeviceName"
     private static let autoConnectEnabledKey = "autoConnectEnabled"
 
     override init() {
@@ -60,7 +59,6 @@ final class BluetoothCentral: NSObject, ObservableObject {
             withServices: [BleUuids.service],
             options: [CBCentralManagerScanOptionAllowDuplicatesKey: false],
         )
-        attemptAutomaticConnection()
     }
 
     func connect(to device: DiscoveredBluetoothDevice) {
@@ -78,7 +76,6 @@ final class BluetoothCentral: NSObject, ObservableObject {
         connectingDeviceID = device.id
         deviceName = device.name
         UserDefaults.standard.set(device.id.uuidString, forKey: Self.preferredDeviceIDKey)
-        UserDefaults.standard.set(device.name, forKey: Self.preferredDeviceNameKey)
         automaticConnectionAttempted = true
 
         if let current = self.peripheral, current.identifier != device.id, current.state != .disconnected {
@@ -145,20 +142,9 @@ final class BluetoothCentral: NSObject, ObservableObject {
               !automaticConnectionAttempted,
               manager.state == .poweredOn,
               let preferredDeviceIDString = UserDefaults.standard.string(forKey: Self.preferredDeviceIDKey),
-              let preferredDeviceID = UUID(uuidString: preferredDeviceIDString) else { return }
+              let device = discoveredDevices.first(where: { $0.id.uuidString == preferredDeviceIDString }),
+              discoveredPeripherals[device.id] != nil else { return }
 
-        automaticConnectionAttempted = true
-        guard let peripheral = manager.retrievePeripherals(withIdentifiers: [preferredDeviceID]).first else {
-            automaticConnectionAttempted = false
-            return
-        }
-
-        discoveredPeripherals[peripheral.identifier] = peripheral
-        let name = peripheral.name
-            ?? UserDefaults.standard.string(forKey: Self.preferredDeviceNameKey)
-            ?? "Android device"
-        let device = DiscoveredBluetoothDevice(id: peripheral.identifier, name: name, rssi: 0)
-        updateDiscoveredDevice(device)
         connect(to: device)
     }
 
