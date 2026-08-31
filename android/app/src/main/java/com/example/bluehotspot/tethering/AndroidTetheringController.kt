@@ -21,6 +21,7 @@ class AndroidTetheringController(
     override val state: StateFlow<TetheringState> = _state.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var ownsHotspot = false
 
     override fun start() {
         if (Build.VERSION.SDK_INT < 36) {
@@ -41,6 +42,7 @@ class AndroidTetheringController(
                 return@launch
             }
             _state.value = if (result.errorCode == 0) {
+                ownsHotspot = true
                 TetheringState.Active
             } else {
                 TetheringState.Failed("root start error=${result.errorCode}, uid=${result.uid}")
@@ -49,7 +51,7 @@ class AndroidTetheringController(
     }
 
     override fun stop() {
-        if (_state.value == TetheringState.Idle) return
+        if (!ownsHotspot || _state.value == TetheringState.Idle) return
         _state.value = TetheringState.Stopping
         scope.launch {
             val result = runCatching {
@@ -62,6 +64,7 @@ class AndroidTetheringController(
                 return@launch
             }
             _state.value = if (result.errorCode == 0) {
+                ownsHotspot = false
                 TetheringState.Idle
             } else {
                 TetheringState.Failed("root stop error=${result.errorCode}, uid=${result.uid}")
@@ -72,3 +75,4 @@ class AndroidTetheringController(
     private fun initialState(): TetheringState =
         if (Build.VERSION.SDK_INT >= 36) TetheringState.Idle else TetheringState.Unsupported
 }
+
