@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val compileSdkVersion = providers.gradleProperty("android.compileSdk").getOrElse("37").toInt()
+val compileSdkVersion = providers.gradleProperty("android.compileSdk").orNull?.toInt() ?: 37
 
 android {
     namespace = "com.example.bluehotspot"
