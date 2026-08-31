@@ -6,42 +6,23 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [Color.indigo.opacity(0.24), Color.cyan.opacity(0.12), Color.clear],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing,
-                )
-                .ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    deviceListCard
+                    statusCard
+                    actionCard
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        header
-                        deviceListCard
-                        statusCard
-                        actionCard
-
-                        if let error = bluetooth.lastError {
-                            Text(error)
-                                .foregroundStyle(.red)
-                                .font(.footnote)
-                                .padding(.horizontal, 4)
-                        }
+                    if let error = bluetooth.lastError {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.footnote)
+                            .padding(.horizontal, 4)
                     }
-                    .padding()
                 }
+                .padding()
             }
             .navigationTitle("BlueHotspot")
             .onAppear { bluetooth.startScanning() }
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Hotspot control")
-                .font(.largeTitle.bold())
-            Text("Choose a trusted Android device to control over Bluetooth")
-                .foregroundStyle(.secondary)
         }
     }
 
@@ -106,6 +87,15 @@ struct HomeView: View {
             glassButton("Scan again", systemImage: "arrow.clockwise") {
                 bluetooth.startScanning()
             }
+
+            Toggle(isOn: $bluetooth.autoConnectEnabled) {
+                Label("Automatic connection", systemImage: "bolt.horizontal.circle")
+            }
+            .tint(.green)
+
+            Text("Reconnect to the last selected Android device when it is available.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .glassCard()
     }

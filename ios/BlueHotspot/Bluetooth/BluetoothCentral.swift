@@ -16,6 +16,14 @@ final class BluetoothCentral: NSObject, ObservableObject {
     @Published private(set) var deviceName: String?
     @Published private(set) var discoveredDevices: [DiscoveredBluetoothDevice] = []
     @Published private(set) var connectingDeviceID: UUID?
+    @Published var autoConnectEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(autoConnectEnabled, forKey: Self.autoConnectEnabledKey)
+            if autoConnectEnabled {
+                attemptAutomaticConnection()
+            }
+        }
+    }
 
     private var manager: CBCentralManager!
     private var peripheral: CBPeripheral?
@@ -26,8 +34,14 @@ final class BluetoothCentral: NSObject, ObservableObject {
     private var writeQueue: [Data] = []
     private var writeInProgress = false
     private var helloSent = false
+    private var automaticConnectionAttempted = false
+
+    private static let preferredDeviceIDKey = "preferredBluetoothDeviceID"
+    private static let preferredDeviceNameKey = "preferredBluetoothDeviceName"
+    private static let autoConnectEnabledKey = "autoConnectEnabled"
 
     override init() {
+        autoConnectEnabled = UserDefaults.standard.object(forKey: Self.autoConnectEnabledKey) as? Bool ?? true
         super.init()
         manager = CBCentralManager(delegate: self, queue: .main)
     }
@@ -37,13 +51,16 @@ final class BluetoothCentral: NSObject, ObservableObject {
             lastError = "Bluetooth is unavailable"
             return
         }
+        lastError = nil
         manager.stopScan()
         discoveredDevices.removeAll()
         discoveredPeripherals.removeAll()
+        automaticConnectionAttempted = false
         manager.scanForPeripherals(
             withServices: [BleUuids.service],
             options: [CBCentralManagerScanOptionAllowDuplicatesKey: false],
         )
+        attemptAutomaticConnection()
     }
 
     func connect(to device: DiscoveredBluetoothDevice) {
@@ -60,6 +77,9 @@ final class BluetoothCentral: NSObject, ObservableObject {
         lastError = nil
         connectingDeviceID = device.id
         deviceName = device.name
+        UserDefaults.standard.set(device.id.uuidString, forKey: Self.preferredDeviceIDKey)
+        UserDefaults.standard.set(device.name, forKey: Self.preferredDeviceNameKey)
+        automaticConnectionAttempted = true
 
         if let current = self.peripheral, current.identifier != device.id, current.state != .disconnected {
             manager.cancelPeripheralConnection(current)
@@ -120,6 +140,28 @@ final class BluetoothCentral: NSObject, ObservableObject {
         send(BleFrame(type: .getStatus, requestId: UUID(), payload: ""))
     }
 
+    private func attemptAutomaticConnection() {
+        guard autoConnectEnabled,
+              !automaticConnectionAttempted,
+              manager.state == .poweredOn,
+              let preferredDeviceIDString = UserDefaults.standard.string(forKey: Self.preferredDeviceIDKey),
+              let preferredDeviceID = UUID(uuidString: preferredDeviceIDString) else { return }
+
+        automaticConnectionAttempted = true
+        guard let peripheral = manager.retrievePeripherals(withIdentifiers: [preferredDeviceID]).first else {
+            automaticConnectionAttempted = false
+            return
+        }
+
+        discoveredPeripherals[peripheral.identifier] = peripheral
+        let name = peripheral.name
+            ?? UserDefaults.standard.string(forKey: Self.preferredDeviceNameKey)
+            ?? "Android device"
+        let device = DiscoveredBluetoothDevice(id: peripheral.identifier, name: name, rssi: 0)
+        updateDiscoveredDevice(device)
+        connect(to: device)
+    }
+
     private func apply(_ frame: BleFrame) {
         switch frame.type {
         case .helloAck, .pong:
@@ -157,7 +199,9 @@ final class BluetoothCentral: NSObject, ObservableObject {
 extension BluetoothCentral: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         state = central.state
-        if central.state != .poweredOn {
+        if central.state == .poweredOn {
+            startScanning()
+        } else {
             isConnected = false
             hotspotState = "Unknown"
             connectingDeviceID = nil
@@ -176,9 +220,15 @@ extension BluetoothCentral: CBCentralManagerDelegate {
         let name = peripheral.name
             ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String)
             ?? "Android device"
-        updateDiscoveredDevice(
-            DiscoveredBluetoothDevice(id: peripheral.identifier, name: name, rssi: RSSI.intValue),
-        )
+        let device = DiscoveredBluetoothDevice(id: peripheral.identifier, name: name, rssi: RSSI.intValue)
+        updateDiscoveredDevice(device)
+        if autoConnectEnabled,
+           let preferredDeviceIDString = UserDefaults.standard.string(forKey: Self.preferredDeviceIDKey),
+           peripheral.identifier.uuidString == preferredDeviceIDString,
+           !isConnected,
+           connectingDeviceID == nil {
+            connect(to: device)
+        }
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
