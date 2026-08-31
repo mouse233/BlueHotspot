@@ -44,7 +44,7 @@ fun HomeScreen(
                 Text("Connected devices", style = MaterialTheme.typography.titleMedium)
                 if (connectedDevices.isEmpty()) {
                     Text(
-                        "No iPhone connected",
+                        "No controller connected",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {

@@ -106,7 +106,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
             discoveredDevices[id] = device
             val name = device.name
                 ?: result.scanRecord?.deviceName
-                ?: "BlueHotspot Android"
+                ?: "BlueHotspot server"
             _devices.value = (_devices.value.filterNot { it.id == id } +
                 DiscoveredDevice(id, name, result.rssi))
                 .sortedBy { it.name.lowercase() }

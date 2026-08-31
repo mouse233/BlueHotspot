@@ -295,7 +295,7 @@ internal class BleGattServer(
             .map { device ->
                 BleConnectedDevice(
                     address = device.address,
-                    name = device.name ?: "iPhone",
+                    name = device.name ?: "Unknown BLE controller",
                 )
             }
             .sortedBy { it.name.lowercase() }
