@@ -4,9 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val compileSdkVersion = providers.gradleProperty("android.compileSdk")
-    .map(String::toInt)
-    .getOrElse(37)
+val compileSdkVersion = providers.gradleProperty("android.compileSdk").getOrElse("37").toInt()
 
 android {
     namespace = "com.example.bluehotspot"
@@ -24,8 +22,11 @@ android {
         compose = true
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
