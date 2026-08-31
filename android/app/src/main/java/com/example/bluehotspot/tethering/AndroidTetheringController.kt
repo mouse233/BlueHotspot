@@ -1,6 +1,6 @@
 package com.example.bluehotspot.tethering
 
-import android.net.TetheringManager
+import android.net.TetheringManager`nimport androidx.core.content.ContextCompat
 import android.os.Build
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,7 @@ class AndroidTetheringController(
     private val _state = MutableStateFlow<TetheringState>(initialState())
     override val state: StateFlow<TetheringState> = _state.asStateFlow()
 
-    private val executor: Executor = context.mainExecutor
+    private val executor: Executor = ContextCompat.getMainExecutor(context)
     private val manager: TetheringManager? = if (Build.VERSION.SDK_INT >= 36) {
         context.getSystemService(TetheringManager::class.java)
     } else {
