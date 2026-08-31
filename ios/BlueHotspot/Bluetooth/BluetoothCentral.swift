@@ -35,6 +35,7 @@ final class BluetoothCentral: NSObject, ObservableObject {
     private var writeInProgress = false
     private var helloSent = false
     private var automaticConnectionAttempted = false
+    private var rssiTimer: Timer?
 
     private static let preferredDeviceIDKey = "preferredBluetoothDeviceID"
     private static let autoConnectEnabledKey = "autoConnectEnabled"
@@ -86,6 +87,7 @@ final class BluetoothCentral: NSObject, ObservableObject {
         if peripheral.state == .connected {
             isConnected = true
             connectingDeviceID = nil
+            startRSSIUpdates(for: peripheral)
             sendHelloIfReady()
             return
         }
@@ -93,6 +95,7 @@ final class BluetoothCentral: NSObject, ObservableObject {
     }
 
     func disconnect() {
+        stopRSSIUpdates()
         connectingDeviceID = nil
         if let peripheral { manager.cancelPeripheralConnection(peripheral) }
     }
@@ -148,6 +151,30 @@ final class BluetoothCentral: NSObject, ObservableObject {
         connect(to: device)
     }
 
+    private func startRSSIUpdates(for peripheral: CBPeripheral) {
+        stopRSSIUpdates()
+        peripheral.readRSSI()
+        rssiTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self, weak peripheral] _ in
+            guard let self, let peripheral, self.isConnected else { return }
+            peripheral.readRSSI()
+        }
+    }
+
+    private func stopRSSIUpdates() {
+        rssiTimer?.invalidate()
+        rssiTimer = nil
+    }
+
+    private func updateRSSI(_ rssi: NSNumber, for peripheral: CBPeripheral) {
+        guard let index = discoveredDevices.firstIndex(where: { $0.id == peripheral.identifier }) else { return }
+        let current = discoveredDevices[index]
+        discoveredDevices[index] = DiscoveredBluetoothDevice(
+            id: current.id,
+            name: current.name,
+            rssi: rssi.intValue,
+        )
+    }
+
     private func apply(_ frame: BleFrame) {
         switch frame.type {
         case .helloAck, .pong:
@@ -188,6 +215,7 @@ extension BluetoothCentral: CBCentralManagerDelegate {
         if central.state == .poweredOn {
             startScanning()
         } else {
+            stopRSSIUpdates()
             isConnected = false
             hotspotState = "Unknown"
             connectingDeviceID = nil
@@ -227,11 +255,13 @@ extension BluetoothCentral: CBCentralManagerDelegate {
         writeQueue.removeAll()
         writeInProgress = false
         peripheral.delegate = self
+        startRSSIUpdates(for: peripheral)
         peripheral.discoverServices([BleUuids.service])
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         if self.peripheral?.identifier == peripheral.identifier {
+            stopRSSIUpdates()
             isConnected = false
             connectingDeviceID = nil
         }
@@ -240,6 +270,7 @@ extension BluetoothCentral: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         if self.peripheral?.identifier == peripheral.identifier {
+            stopRSSIUpdates()
             isConnected = false
             commandCharacteristic = nil
             eventCharacteristic = nil
@@ -271,6 +302,11 @@ extension BluetoothCentral: CBPeripheralDelegate {
             }
         }
         sendHelloIfReady()
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        guard error == nil else { return }
+        updateRSSI(RSSI, for: peripheral)
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
