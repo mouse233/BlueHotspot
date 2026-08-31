@@ -45,7 +45,7 @@ Use the latest modern native Android stack.
 - Compose BOM: **2026.08.00**
 - `compileSdk`: **37**
 - `targetSdk`: **36**
-- `minSdk`: **26**
+- `minSdk`: **36**
 
 Use stable dependencies whenever possible.
 
@@ -55,7 +55,7 @@ The reference seamless Internet-tethering implementation requires:
 - a deployment where the app has the privilege needed to control Wi‑Fi tethering
 - preferably a **privileged/system app installation** on the reference Android device
 
-Older Android versions may remain installable for BLE/manual fallback support, but seamless Internet tethering is not guaranteed there.
+The project is installable on Android 16 / API 36 and newer only; seamless Internet tethering is not supported on older Android versions.
 
 ## 1.2 iOS
 
@@ -2100,7 +2100,7 @@ Requirements:
    - Version Catalog
    - compileSdk 37
    - targetSdk 36
-   - minSdk 26
+   - minSdk 36
 
 3. Create the TetheringBackend abstraction.
 
