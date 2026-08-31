@@ -22,7 +22,7 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("BlueHotspot")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -85,7 +85,7 @@ struct HomeView: View {
                 .foregroundStyle(.tint)
                 .padding(16)
             }
-            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
@@ -153,7 +153,7 @@ struct HomeView: View {
                 rowDivider
                 statusRow("Hotspot", value: bluetooth.hotspotState)
             }
-            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
@@ -198,7 +198,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .tint(.blue)
-            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
