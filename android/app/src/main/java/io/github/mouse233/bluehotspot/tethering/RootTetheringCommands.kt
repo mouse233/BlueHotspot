@@ -1,4 +1,4 @@
-package com.example.bluehotspot.tethering
+package io.github.mouse233.bluehotspot.tethering
 
 import android.net.TetheringManager
 import android.os.Parcelable
@@ -87,3 +87,4 @@ object RootTetheringCommands {
         }
     }
 }
+

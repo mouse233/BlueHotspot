@@ -1,4 +1,4 @@
-package com.example.bluehotspot.ble
+package io.github.mouse233.bluehotspot.ble
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -20,8 +20,8 @@ import android.content.pm.PackageManager
 import android.os.ParcelUuid
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.example.bluehotspot.tethering.TetheringController
-import com.example.bluehotspot.tethering.TetheringState
+import io.github.mouse233.bluehotspot.tethering.TetheringController
+import io.github.mouse233.bluehotspot.tethering.TetheringState
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -305,6 +305,7 @@ internal class BleGattServer(
             ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED
     }
 }
+
 
 
 

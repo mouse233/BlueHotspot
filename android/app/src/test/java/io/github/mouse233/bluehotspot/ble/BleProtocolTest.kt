@@ -1,4 +1,4 @@
-package com.example.bluehotspot.ble
+package io.github.mouse233.bluehotspot.ble
 
 import java.util.UUID
 import org.junit.Test
@@ -37,4 +37,5 @@ class BleProtocolTest {
         }
     }
 }
+
 

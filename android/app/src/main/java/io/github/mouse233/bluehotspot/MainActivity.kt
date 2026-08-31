@@ -1,4 +1,4 @@
-package com.example.bluehotspot
+package io.github.mouse233.bluehotspot
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -12,9 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.bluehotspot.ble.BleControlForegroundService
-import com.example.bluehotspot.ui.AppViewModel
-import com.example.bluehotspot.ui.HomeScreen
+import io.github.mouse233.bluehotspot.ble.BleControlForegroundService
+import io.github.mouse233.bluehotspot.ui.AppViewModel
+import io.github.mouse233.bluehotspot.ui.HomeScreen
 
 class MainActivity : ComponentActivity() {
     private val app: BlueHotspotApplication
@@ -67,3 +67,4 @@ class MainActivity : ComponentActivity() {
         BleControlForegroundService.start(this)
     }
 }
+

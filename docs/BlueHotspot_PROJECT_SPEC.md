@@ -1051,7 +1051,7 @@ Do not use:
 # 23. Android package structure
 
 ```text
-com.example.bluehotspot
+io.github.mouse233.bluehotspot
 ├── app/
 ├── ui/
 │   ├── home/
@@ -2215,3 +2215,4 @@ The product is successful only when:
 > **The iPhone can actually browse the Internet through the Android device's remotely-started hotspot.**
 
 Build that path correctly before adding unrelated features.
+

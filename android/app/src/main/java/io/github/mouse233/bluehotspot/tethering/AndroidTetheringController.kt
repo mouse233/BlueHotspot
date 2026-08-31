@@ -1,7 +1,7 @@
-package com.example.bluehotspot.tethering
+package io.github.mouse233.bluehotspot.tethering
 
 import android.os.Build
-import com.example.bluehotspot.BlueHotspotApplication
+import io.github.mouse233.bluehotspot.BlueHotspotApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -75,4 +75,5 @@ class AndroidTetheringController(
     private fun initialState(): TetheringState =
         if (Build.VERSION.SDK_INT >= 36) TetheringState.Idle else TetheringState.Unsupported
 }
+
 

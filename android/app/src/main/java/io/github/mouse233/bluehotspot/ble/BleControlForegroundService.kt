@@ -1,4 +1,4 @@
-package com.example.bluehotspot.ble
+package io.github.mouse233.bluehotspot.ble
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,8 +11,8 @@ import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.example.bluehotspot.BlueHotspotApplication
-import com.example.bluehotspot.MainActivity
+import io.github.mouse233.bluehotspot.BlueHotspotApplication
+import io.github.mouse233.bluehotspot.MainActivity
 
 /** Keeps the encrypted BLE control endpoint alive after the activity leaves foreground. */
 class BleControlForegroundService : Service() {
@@ -74,4 +74,5 @@ class BleControlForegroundService : Service() {
         )
     }
 }
+
 

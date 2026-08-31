@@ -1,4 +1,4 @@
-package com.example.bluehotspot.tethering
+package io.github.mouse233.bluehotspot.tethering
 
 import kotlinx.coroutines.flow.StateFlow
 
@@ -18,3 +18,4 @@ sealed interface TetheringState {
     data object Stopping : TetheringState
     data class Failed(val reason: String) : TetheringState
 }
+

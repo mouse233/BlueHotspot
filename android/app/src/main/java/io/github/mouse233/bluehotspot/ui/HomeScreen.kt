@@ -1,4 +1,4 @@
-package com.example.bluehotspot.ui
+package io.github.mouse233.bluehotspot.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.bluehotspot.tethering.TetheringState
+import io.github.mouse233.bluehotspot.tethering.TetheringState
 
 @Composable
 fun HomeScreen(
@@ -50,3 +50,4 @@ private fun TetheringState.label(): String = when (this) {
     TetheringState.Stopping -> "Stopping"
     is TetheringState.Failed -> "Failed: $reason"
 }
+

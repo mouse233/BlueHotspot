@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.bluehotspot"
+    namespace = "io.github.mouse233.bluehotspot"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.bluehotspot"
+        applicationId = "io.github.mouse233.bluehotspot"
         minSdk = 36
         targetSdk = 36
         versionCode = 1
@@ -48,4 +48,5 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
     testImplementation("junit:junit:4.13.2")
 }
+
 

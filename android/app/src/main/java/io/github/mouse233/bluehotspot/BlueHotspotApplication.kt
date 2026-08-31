@@ -1,11 +1,11 @@
-package com.example.bluehotspot
+package io.github.mouse233.bluehotspot
 
 import android.app.Application
 import be.mygod.librootkotlinx.RootServer
 import be.mygod.librootkotlinx.RootSession
-import com.example.bluehotspot.ble.BleGattServer
-import com.example.bluehotspot.tethering.AndroidTetheringController
-import com.example.bluehotspot.tethering.TetheringController
+import io.github.mouse233.bluehotspot.ble.BleGattServer
+import io.github.mouse233.bluehotspot.tethering.AndroidTetheringController
+import io.github.mouse233.bluehotspot.tethering.TetheringController
 
 class BlueHotspotApplication : Application() {
     lateinit var rootSession: RootSession
@@ -28,4 +28,5 @@ class BlueHotspotApplication : Application() {
         bleGattServer = BleGattServer(this, tetheringController)
     }
 }
+
 

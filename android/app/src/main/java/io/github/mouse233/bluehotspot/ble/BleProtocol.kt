@@ -1,4 +1,4 @@
-package com.example.bluehotspot.ble
+package io.github.mouse233.bluehotspot.ble
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -98,3 +98,4 @@ internal class BleFrameDecoder {
         return frames
     }
 }
+
