@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -18,7 +21,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -29,24 +32,24 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android API 36 for current runner
+      - name: Install Android API 37
         run: |
           yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-36"
+          sdkmanager "platforms;android-37"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          gradle-version: "8.14.4"
+          gradle-version: "9.5.0"
 
       - name: Lint
-        run: gradle -Pandroid.compileSdk=36 lint
+        run: gradle lint
 
       - name: Unit tests
-        run: gradle -Pandroid.compileSdk=36 test
+        run: gradle test
 
       - name: Assemble debug APK
-        run: gradle -Pandroid.compileSdk=36 assembleDebug
+        run: gradle assembleDebug
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
