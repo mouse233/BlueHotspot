@@ -1,4 +1,4 @@
-package io.github.mouse233.bluehotspot.tethering
+package io.github.mouse233.bluehotspot.server.tethering
 
 import kotlinx.coroutines.flow.StateFlow
 

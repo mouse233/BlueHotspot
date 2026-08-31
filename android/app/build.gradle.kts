@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "io.github.mouse233.bluehotspot"
+    namespace = "io.github.mouse233.bluehotspot.server"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.mouse233.bluehotspot"
+        applicationId = "io.github.mouse233.bluehotspot.server"
         minSdk = 36
         targetSdk = 36
         versionCode = 1

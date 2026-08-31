@@ -1,9 +1,9 @@
-package io.github.mouse233.bluehotspot.ui
+package io.github.mouse233.bluehotspot.server.ui
 
 import androidx.lifecycle.ViewModel
-import io.github.mouse233.bluehotspot.ble.BleConnectedDevice
-import io.github.mouse233.bluehotspot.tethering.TetheringController
-import io.github.mouse233.bluehotspot.tethering.TetheringState
+import io.github.mouse233.bluehotspot.server.ble.BleConnectedDevice
+import io.github.mouse233.bluehotspot.server.tethering.TetheringController
+import io.github.mouse233.bluehotspot.server.tethering.TetheringState
 import kotlinx.coroutines.flow.StateFlow
 
 class AppViewModel(

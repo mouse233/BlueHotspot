@@ -1,4 +1,4 @@
-package io.github.mouse233.bluehotspot.ble
+package io.github.mouse233.bluehotspot.server.ble
 
 import java.util.UUID
 

@@ -1,4 +1,4 @@
-package io.github.mouse233.bluehotspot.ui
+package io.github.mouse233.bluehotspot.server.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.github.mouse233.bluehotspot.ble.BleConnectedDevice
-import io.github.mouse233.bluehotspot.tethering.TetheringState
+import io.github.mouse233.bluehotspot.server.ble.BleConnectedDevice
+import io.github.mouse233.bluehotspot.server.tethering.TetheringState
 
 @Composable
 fun HomeScreen(

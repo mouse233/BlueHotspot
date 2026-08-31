@@ -1051,7 +1051,7 @@ Do not use:
 # 23. Android package structure
 
 ```text
-io.github.mouse233.bluehotspot
+io.github.mouse233.bluehotspot.server
 ├── app/
 ├── ui/
 │   ├── home/

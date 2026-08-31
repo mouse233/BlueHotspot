@@ -1,7 +1,7 @@
-package io.github.mouse233.bluehotspot.tethering
+package io.github.mouse233.bluehotspot.server.tethering
 
 import android.os.Build
-import io.github.mouse233.bluehotspot.BlueHotspotApplication
+import io.github.mouse233.bluehotspot.server.BlueHotspotApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
