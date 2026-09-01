@@ -43,6 +43,8 @@ class MainActivity : ComponentActivity() {
                     deviceName = viewModel.deviceName.collectAsState().value,
                     lastError = viewModel.lastError.collectAsState().value,
                     onScan = ::requestPermissionsAndScan,
+                    autoConnectEnabled = viewModel.autoConnectEnabled.collectAsState().value,
+                    onAutoConnectChange = viewModel::setAutoConnectEnabled,
                     onConnect = viewModel::connect,
                     onDisconnect = viewModel::disconnect,
                     onStart = viewModel::startHotspot,

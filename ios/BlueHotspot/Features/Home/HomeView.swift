@@ -32,9 +32,9 @@ struct HomeView: View {
                             Label("Automatic connection", systemImage: "bolt.horizontal.circle")
                         }
                     } label: {
-                        Image(systemName: "gearshape")
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("Settings")
+                    .accessibilityLabel("Menu")
                 }
             }
             .onAppear { bluetooth.startScanning() }
@@ -185,7 +185,7 @@ struct HomeView: View {
                     Button(role: .destructive) {
                         bluetooth.disconnect()
                     } label: {
-                        controlRow("Disconnect", systemImage: "xmark.circle")
+                        controlRow("Disconnect", systemImage: "xmark.circle", destructive: true)
                     }
                 } else {
                     Button {
@@ -230,7 +230,7 @@ struct HomeView: View {
         .padding(16)
     }
 
-    private func controlRow(_ title: String, systemImage: String) -> some View {
+    private func controlRow(_ title: String, systemImage: String, destructive: Bool = false) -> some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .frame(width: 28)
@@ -240,7 +240,7 @@ struct HomeView: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.tertiary)
         }
-        .foregroundStyle(.tint)
+        .foregroundStyle(destructive ? Color.red : Color.accentColor)
         .contentShape(Rectangle())
         .padding(16)
     }

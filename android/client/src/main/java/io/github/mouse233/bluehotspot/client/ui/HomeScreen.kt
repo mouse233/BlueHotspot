@@ -2,44 +2,53 @@ package io.github.mouse233.bluehotspot.client.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SettingsInputAntenna
-import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.Switch
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.mouse233.bluehotspot.client.ble.BluetoothState
@@ -56,23 +65,55 @@ internal fun HomeScreen(
     deviceName: String?,
     lastError: String?,
     onScan: () -> Unit,
+    autoConnectEnabled: Boolean,
+    onAutoConnectChange: (Boolean) -> Unit,
     onConnect: (DiscoveredDevice) -> Unit,
     onDisconnect: () -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        rememberTopAppBarState(),
+    )
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
                 title = { Text("BlueHotspot") },
                 actions = {
-                    IconButton(
-                        onClick = onScan,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Scan for Android devices"
-                        },
-                    ) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = null)
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                Icons.Outlined.MoreVert,
+                                contentDescription = "Menu",
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Automatic connection") },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Bolt, contentDescription = null)
+                                },
+                                trailingIcon = {
+                                    Switch(
+                                        checked = autoConnectEnabled,
+                                        onCheckedChange = {
+                                            onAutoConnectChange(it)
+                                            menuExpanded = false
+                                        },
+                                    )
+                                },
+                                onClick = {
+                                    onAutoConnectChange(!autoConnectEnabled)
+                                    menuExpanded = false
+                                },
+                            )
+                        }
                     }
                 },
             )
@@ -305,8 +346,11 @@ private fun DeviceRow(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = if (device.rssi == 0) "Signal unavailable" else "${device.rssi} dBm",
+                text = "${device.id.uppercase()} · " +
+                    if (device.rssi == 0) "Signal unavailable" else "${device.rssi} dBm",
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -319,7 +363,7 @@ private fun DeviceRow(
             isConnected -> Text(
                 "Connected",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF2E7D32),
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
             )
             else -> Icon(

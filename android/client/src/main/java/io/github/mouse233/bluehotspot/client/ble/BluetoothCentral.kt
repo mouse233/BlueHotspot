@@ -19,6 +19,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import java.util.ArrayDeque
@@ -53,9 +55,15 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
     private companion object {
         const val MAX_CHUNK = 180
         const val REQUESTED_MTU = 247
+        const val RSSI_REFRESH_INTERVAL_MS = 2_000L
+        const val SCAN_REPORT_DELAY_MS = 2_000L
+        const val PREFERENCES_NAME = "bluehotspot_client"
+        const val AUTO_CONNECT_KEY = "auto_connect_enabled"
+        const val PREFERRED_DEVICE_ID_KEY = "preferred_device_id"
     }
 
     private val appContext = context.applicationContext
+    private val preferences = appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
     private val adapter: BluetoothAdapter? =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
     private val scanner get() = adapter?.bluetoothLeScanner
@@ -72,6 +80,10 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
     val deviceName: StateFlow<String?> = _deviceName.asStateFlow()
     private val _lastError = MutableStateFlow<String?>(null)
     val lastError: StateFlow<String?> = _lastError.asStateFlow()
+    private val _autoConnectEnabled = MutableStateFlow(
+        preferences.getBoolean(AUTO_CONNECT_KEY, true),
+    )
+    val autoConnectEnabled: StateFlow<Boolean> = _autoConnectEnabled.asStateFlow()
 
     private val discoveredDevices = mutableMapOf<String, BluetoothDevice>()
     private val writeQueue = ArrayDeque<ByteArray>()
@@ -84,6 +96,16 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
     private var negotiatedMtu = 23
     private var servicesDiscovering = false
     private var ready = false
+    private val rssiHandler = Handler(Looper.getMainLooper())
+    private val rssiRefresh = object : Runnable {
+        override fun run() {
+            val gatt = currentGatt
+            if (ready && gatt != null) {
+                gatt.readRemoteRssi()
+                rssiHandler.postDelayed(this, RSSI_REFRESH_INTERVAL_MS)
+            }
+        }
+    }
 
     private val bondReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -101,20 +123,32 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val device = result.device
-            val id = device.address
-            discoveredDevices[id] = device
-            val name = device.name
-                ?: result.scanRecord?.deviceName
-                ?: "BlueHotspot server"
-            _devices.value = (_devices.value.filterNot { it.id == id } +
-                DiscoveredDevice(id, name, result.rssi))
-                .sortedBy { it.name.lowercase() }
+            publishScanResult(result)
+        }
+
+        override fun onBatchScanResults(results: MutableList<ScanResult>) {
+            results.forEach(::publishScanResult)
         }
 
         override fun onScanFailed(errorCode: Int) {
             _connectionState.value = ConnectionState.Disconnected
             _lastError.value = "BLE scan failed: $errorCode"
+        }
+    }
+    private fun publishScanResult(result: ScanResult) {
+        val device = result.device
+        val id = device.address
+        discoveredDevices[id] = device
+        val name = device.name
+            ?: result.scanRecord?.deviceName
+            ?: "BlueHotspot server"
+        val discovered = DiscoveredDevice(id, name, result.rssi)
+        _devices.value = (_devices.value.filterNot { it.id == id } + discovered)
+            .sortedBy { it.name.lowercase() }
+        if (_autoConnectEnabled.value && _connectionState.value == ConnectionState.Scanning &&
+            preferences.getString(PREFERRED_DEVICE_ID_KEY, null) == id
+        ) {
+            connect(discovered)
         }
     }
 
@@ -139,6 +173,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         }
         try {
             stopScanning()
+            stopRssiUpdates()
             discoveredDevices.clear()
             _devices.value = emptyList()
             _lastError.value = null
@@ -147,6 +182,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
                 listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(BleUuids.SERVICE)).build()),
                 ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setReportDelay(SCAN_REPORT_DELAY_MS)
                     .build(),
                 scanCallback,
             )
@@ -165,6 +201,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
             stopScanning()
             closeGatt()
             currentDevice = target
+            preferences.edit().putString(PREFERRED_DEVICE_ID_KEY, device.id).apply()
             _deviceName.value = device.name
             _connectionState.value = ConnectionState.Connecting
             _lastError.value = null
@@ -185,6 +222,18 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         _deviceName.value = null
         _connectionState.value = ConnectionState.Disconnected
         _hotspotState.value = "Unknown"
+    }
+
+    fun setAutoConnectEnabled(enabled: Boolean) {
+        _autoConnectEnabled.value = enabled
+        preferences.edit().putBoolean(AUTO_CONNECT_KEY, enabled).apply()
+        if (enabled) attemptAutomaticConnection()
+    }
+
+    private fun attemptAutomaticConnection() {
+        if (!_autoConnectEnabled.value || _connectionState.value != ConnectionState.Scanning) return
+        val preferredId = preferences.getString(PREFERRED_DEVICE_ID_KEY, null) ?: return
+        _devices.value.firstOrNull { it.id == preferredId }?.let(::connect)
     }
 
     fun startHotspot() {
@@ -262,6 +311,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
                 return
             }
             ready = true
+            startRssiUpdates()
             _connectionState.value = ConnectionState.Connected
             send(BleFrame(BleMessage.HELLO, UUID.randomUUID()))
             send(BleFrame(BleMessage.GET_STATUS, UUID.randomUUID()))
@@ -277,6 +327,14 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
                 decoder.append(value).forEach(::apply)
             } catch (error: BleProtocolException) {
                 fail("Invalid message received from Android")
+            }
+        }
+
+        override fun onReadRemoteRssi(gatt: BluetoothGatt, rssi: Int, status: Int) {
+            if (gatt !== currentGatt || status != BluetoothGatt.GATT_SUCCESS) return
+            val address = gatt.device.address
+            _devices.value = _devices.value.map { device ->
+                if (device.id == address) device.copy(rssi = rssi) else device
             }
         }
 
@@ -367,6 +425,15 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         BluetoothState.Unsupported
     }
 
+    private fun startRssiUpdates() {
+        rssiHandler.removeCallbacks(rssiRefresh)
+        rssiHandler.post(rssiRefresh)
+    }
+
+    private fun stopRssiUpdates() {
+        rssiHandler.removeCallbacks(rssiRefresh)
+    }
+
     private fun stopScanning() {
         try {
             scanner?.stopScan(scanCallback)
@@ -376,6 +443,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
     }
 
     private fun closeGatt() {
+        stopRssiUpdates()
         ready = false
         servicesDiscovering = false
         writeInProgress = false

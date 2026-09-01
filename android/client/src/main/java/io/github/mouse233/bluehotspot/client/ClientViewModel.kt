@@ -16,11 +16,13 @@ internal class ClientViewModel(context: Context) : ViewModel() {
     val hotspotState = bluetooth.hotspotState
     val deviceName = bluetooth.deviceName
     val lastError = bluetooth.lastError
+    val autoConnectEnabled = bluetooth.autoConnectEnabled
 
     fun refreshBluetoothState() = bluetooth.refreshBluetoothState()
     fun startScanning() = bluetooth.startScanning()
     fun connect(device: io.github.mouse233.bluehotspot.client.ble.DiscoveredDevice) = bluetooth.connect(device)
     fun disconnect() = bluetooth.disconnect()
+    fun setAutoConnectEnabled(enabled: Boolean) = bluetooth.setAutoConnectEnabled(enabled)
     fun startHotspot() = bluetooth.startHotspot()
     fun stopHotspot() = bluetooth.stopHotspot()
 
