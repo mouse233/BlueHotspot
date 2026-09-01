@@ -3,6 +3,7 @@ package io.github.mouse233.bluehotspot.server.tethering
 import android.net.TetheringInterface
 import android.net.TetheringManager
 import android.os.Build
+import android.util.Log
 import io.github.mouse233.bluehotspot.server.BlueHotspotApplication
 import java.util.concurrent.Executor
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,9 @@ import kotlinx.coroutines.launch
 class AndroidTetheringController(
     private val context: android.content.Context,
 ) : TetheringController {
+    private companion object {
+        const val TAG = "BlueHotspotTether"
+    }
     private val _state = MutableStateFlow<TetheringState>(initialState())
     override val state: StateFlow<TetheringState> = _state.asStateFlow()
 
@@ -32,6 +36,7 @@ class AndroidTetheringController(
     private val tetheringEventCallback = object : TetheringManager.TetheringEventCallback {
         override fun onTetheredInterfacesChanged(interfaces: Set<TetheringInterface>) {
             val wifiActive = interfaces.any { it.getType() == TetheringManager.TETHERING_WIFI }
+            Log.i(TAG, "Tethering interfaces changed: wifiActive=" + wifiActive + ", count=" + interfaces.size)
             externalActive = wifiActive
             if (ownsHotspot) return
 
@@ -55,6 +60,8 @@ class AndroidTetheringController(
                     tetheringExecutor,
                     tetheringEventCallback,
                 )
+            }.onFailure { error ->
+                Log.w(TAG, "Unable to register tethering callback", error)
             }
         }
     }
@@ -87,6 +94,7 @@ class AndroidTetheringController(
                 )
                 return@launch
             }
+            Log.i(TAG, "Root tethering result: error=" + result.errorCode + ", uid=" + result.uid)
             _state.value = when {
                 result.errorCode == 0 -> {
                     ownsHotspot = true
@@ -127,6 +135,7 @@ class AndroidTetheringController(
                 )
                 return@launch
             }
+            Log.i(TAG, "Root tethering result: error=" + result.errorCode + ", uid=" + result.uid)
             _state.value = when {
                 result.errorCode == 0 -> {
                     ownsHotspot = false
