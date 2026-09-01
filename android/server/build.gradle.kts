@@ -41,6 +41,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.librootkotlinx)
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -48,5 +49,3 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
     testImplementation("junit:junit:4.13.2")
 }
-
-

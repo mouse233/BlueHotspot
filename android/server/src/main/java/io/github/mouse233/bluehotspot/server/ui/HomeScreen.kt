@@ -2,22 +2,40 @@ package io.github.mouse233.bluehotspot.server.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.PowerSettingsNew
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.mouse233.bluehotspot.server.ble.BleConnectedDevice
 import io.github.mouse233.bluehotspot.server.tethering.TetheringState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: TetheringState,
@@ -25,39 +43,56 @@ fun HomeScreen(
     onStart: () -> Unit,
     onStop: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text("BlueHotspot", style = MaterialTheme.typography.headlineMedium)
-        Text("System-configured Wi-Fi hotspot")
-        Text("State: ${state.label()}")
-
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("Connected devices", style = MaterialTheme.typography.titleMedium)
-                if (connectedDevices.isEmpty()) {
-                    Text(
-                        "No controller connected",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    connectedDevices.forEach { device ->
+    Scaffold(
+        topBar = { LargeTopAppBar(title = { Text("BlueHotspot") }) },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SectionHeader("Hotspot", Icons.Outlined.PowerSettingsNew)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
+                            Icon(
+                                imageVector = if (state.isActive()) {
+                                    Icons.Outlined.CheckCircle
+                                } else {
+                                    Icons.Outlined.Circle
+                                },
+                                contentDescription = null,
+                                tint = if (state.isActive()) {
+                                    Color(0xFF2E7D32)
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                            )
                             Column {
-                                Text(device.name, style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    "BLE connected · ${device.address}",
-                                    style = MaterialTheme.typography.bodySmall,
+                                    text = state.label(),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    text = "System-configured Wi-Fi hotspot",
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
@@ -65,25 +100,164 @@ fun HomeScreen(
                     }
                 }
             }
-        }
 
-        Button(
-            onClick = onStart,
-            enabled = state !is TetheringState.Starting &&
-                state !is TetheringState.Active &&
-                state !is TetheringState.ExternalActive,
-        ) {
-            Text("Start hotspot")
-        }
-        OutlinedButton(
-            onClick = onStop,
-            enabled = state is TetheringState.Active ||
-                state is TetheringState.ExternalActive,
-        ) {
-            Text("Stop hotspot")
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SectionHeader("Controls", Icons.Outlined.PowerSettingsNew)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    ) {
+                        ActionRow(
+                            icon = Icons.Outlined.PowerSettingsNew,
+                            title = "Start hotspot",
+                            enabled = state.canStart(),
+                            onClick = onStart,
+                        )
+                        RowDivider()
+                        ActionRow(
+                            icon = Icons.Outlined.Stop,
+                            title = "Stop hotspot",
+                            enabled = state.canStop(),
+                            onClick = onStop,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SectionHeader("Connected devices", Icons.Outlined.Devices, connectedDevices.size)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    ) {
+                        if (connectedDevices.isEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Bluetooth,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    "No controller connected",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        } else {
+                            connectedDevices.forEachIndexed { index, device ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Bluetooth,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            device.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium,
+                                        )
+                                        Text(
+                                            "BLE connected · ${device.address}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                                if (index != connectedDevices.lastIndex) RowDivider()
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun SectionHeader(title: String, icon: ImageVector, count: Int? = null) {
+    Row(
+        modifier = Modifier.padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            title,
+            modifier = Modifier.padding(start = 8.dp),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (count != null) {
+            Text(
+                count.toString(),
+                modifier = Modifier.padding(start = 8.dp),
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionRow(
+    icon: ImageVector,
+    title: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        androidx.compose.material3.TextButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(icon, contentDescription = null)
+                Text(title, modifier = Modifier.weight(1f))
+                Icon(Icons.Outlined.ChevronRight, contentDescription = null)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowDivider() {
+    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+}
+
+private fun TetheringState.isActive(): Boolean =
+    this == TetheringState.Active || this == TetheringState.ExternalActive
+
+private fun TetheringState.canStart(): Boolean =
+    this != TetheringState.Starting && this != TetheringState.Active && this != TetheringState.ExternalActive
+
+private fun TetheringState.canStop(): Boolean =
+    this == TetheringState.Active || this == TetheringState.ExternalActive
 
 private fun TetheringState.label(): String = when (this) {
     TetheringState.Unsupported -> "Unsupported on this Android version"

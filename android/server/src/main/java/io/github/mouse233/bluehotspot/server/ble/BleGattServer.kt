@@ -287,7 +287,7 @@ internal class BleGattServer(
         val frame = BleFrame(event, UUID.randomUUID(), payload)
         synchronized(decoders) {
             subscribedDevices.toList().forEach { address ->
-                BluetoothAdapter.getDefaultAdapter()?.getRemoteDevice(address)?.let { send(it, frame) }
+                connectedDevicesByAddress[address]?.let { send(it, frame) }
             }
         }
     }
@@ -333,8 +333,3 @@ internal class BleGattServer(
             ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED
     }
 }
-
-
-
-
-

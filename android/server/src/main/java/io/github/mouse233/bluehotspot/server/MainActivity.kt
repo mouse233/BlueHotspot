@@ -8,14 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.view.WindowCompat
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.github.mouse233.bluehotspot.server.ble.BleControlForegroundService
 import io.github.mouse233.bluehotspot.server.ui.AppViewModel
 import io.github.mouse233.bluehotspot.server.ui.HomeScreen
+import io.github.mouse233.bluehotspot.server.ui.theme.BlueHotspotTheme
 
 class MainActivity : ComponentActivity() {
     private val app: BlueHotspotApplication
@@ -40,21 +41,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-        WindowCompat.getInsetsController(window, window.decorView).apply {
-            isAppearanceLightStatusBars = true
-            isAppearanceLightNavigationBars = true
-        }
+        enableEdgeToEdge()
         startBleIfPermitted()
         setContent {
-            val state by viewModel.state.collectAsState()
-            val connectedDevices by viewModel.connectedDevices.collectAsState()
-            HomeScreen(
-                state = state,
-                connectedDevices = connectedDevices,
-                onStart = viewModel::start,
-                onStop = viewModel::stop,
-            )
+            BlueHotspotTheme {
+                val state by viewModel.state.collectAsState()
+                val connectedDevices by viewModel.connectedDevices.collectAsState()
+                HomeScreen(
+                    state = state,
+                    connectedDevices = connectedDevices,
+                    onStart = viewModel::start,
+                    onStop = viewModel::stop,
+                )
+            }
         }
     }
 
