@@ -56,7 +56,6 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         const val MAX_CHUNK = 180
         const val REQUESTED_MTU = 247
         const val RSSI_REFRESH_INTERVAL_MS = 2_000L
-        const val SCAN_REPORT_DELAY_MS = 2_000L
         const val PREFERENCES_NAME = "bluehotspot_client"
         const val AUTO_CONNECT_KEY = "auto_connect_enabled"
         const val PREFERRED_DEVICE_ID_KEY = "preferred_device_id"
@@ -139,9 +138,11 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         val device = result.device
         val id = device.address
         discoveredDevices[id] = device
-        val name = device.name
-            ?: result.scanRecord?.deviceName
-            ?: "BlueHotspot server"
+        val previous = _devices.value.firstOrNull { it.id == id }
+        val name = device.name?.takeIf { it.isNotBlank() }
+            ?: result.scanRecord?.deviceName?.takeIf { it.isNotBlank() }
+            ?: previous?.name
+            ?: "Android device"
         val discovered = DiscoveredDevice(id, name, result.rssi)
         _devices.value = (_devices.value.filterNot { it.id == id } + discovered)
             .sortedBy { it.name.lowercase() }
@@ -149,6 +150,14 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
             preferences.getString(PREFERRED_DEVICE_ID_KEY, null) == id
         ) {
             connect(discovered)
+        }
+    }
+
+    private fun publishConnectedDeviceName(device: BluetoothDevice) {
+        val name = device.name?.takeIf { it.isNotBlank() } ?: return
+        _deviceName.value = name
+        _devices.value = _devices.value.map {
+            if (it.id == device.address) it.copy(name = name) else it
         }
     }
 
@@ -177,12 +186,16 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
             discoveredDevices.clear()
             _devices.value = emptyList()
             _lastError.value = null
+            val bleScanner = scanner ?: run {
+                _connectionState.value = ConnectionState.Disconnected
+                _lastError.value = "BLE scanner is unavailable"
+                return
+            }
             _connectionState.value = ConnectionState.Scanning
-            scanner?.startScan(
+            bleScanner.startScan(
                 listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(BleUuids.SERVICE)).build()),
                 ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setReportDelay(SCAN_REPORT_DELAY_MS)
                     .build(),
                 scanCallback,
             )
@@ -255,6 +268,7 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
             }
             try {
                 val device = currentDevice ?: return
+                publishConnectedDeviceName(device)
                 if (device.bondState == BluetoothDevice.BOND_BONDED) {
                     beginServiceDiscovery()
                 } else {
@@ -470,6 +484,3 @@ internal class BluetoothCentral(context: Context) : AutoCloseable {
         }
     }
 }
-
-
-
