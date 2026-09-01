@@ -1,29 +1,26 @@
 package io.github.mouse233.bluehotspot.client.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.SettingsInputAntenna
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PowerSettingsNew
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SettingsInputAntenna
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,22 +31,22 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.Switch
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.mouse233.bluehotspot.client.ble.BluetoothState
 import io.github.mouse233.bluehotspot.client.ble.ConnectionState
@@ -85,10 +82,7 @@ internal fun HomeScreen(
                 actions = {
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
-                            Icon(
-                                Icons.Outlined.MoreVert,
-                                contentDescription = "Menu",
-                            )
+                            Icon(Icons.Outlined.MoreVert, contentDescription = "Menu")
                         }
                         DropdownMenu(
                             expanded = menuExpanded,
@@ -116,6 +110,7 @@ internal fun HomeScreen(
                         }
                     }
                 },
+                scrollBehavior = scrollBehavior,
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -128,17 +123,10 @@ internal fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             item {
-                Section(
-                    title = "Android devices",
-                    icon = Icons.Outlined.SettingsInputAntenna,
-                    count = devices.size,
-                ) {
+                Section("Android devices", Icons.Outlined.SettingsInputAntenna, devices.size) {
                     SectionCard {
                         if (devices.isEmpty()) {
-                            EmptyRow(
-                                icon = Icons.Outlined.Search,
-                                text = "No Android devices found",
-                            )
+                            EmptyRow(Icons.Outlined.Search, "No Android devices found")
                         } else {
                             devices.forEachIndexed { index, device ->
                                 DeviceRow(
@@ -149,95 +137,87 @@ internal fun HomeScreen(
                                         deviceName == device.name,
                                     onClick = { onConnect(device) },
                                 )
-                                if (index != devices.lastIndex) RowDivider()
+                                if (index != devices.lastIndex) ListDivider()
                             }
                         }
-                        RowDivider()
-                        ActionRow(
-                            icon = Icons.Outlined.Refresh,
-                            title = "Scan again",
-                            onClick = onScan,
-                        )
+                        ListDivider()
+                        ActionRow(Icons.Outlined.Search, "Scan again", onClick = onScan)
                     }
                 }
             }
 
             item {
-                Section(title = "Connection", icon = Icons.Outlined.Link) {
+                Section("Connection", Icons.Outlined.Link) {
                     SectionCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Icon(
-                                imageVector = if (connectionState == ConnectionState.Connected) {
-                                    Icons.Outlined.CheckCircle
-                                } else {
-                                    Icons.Outlined.Circle
-                                },
-                                contentDescription = null,
-                                tint = if (connectionState == ConnectionState.Connected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                            )
-                            Column {
+                        ListItem(
+                            leadingContent = {
+                                Icon(
+                                    if (connectionState == ConnectionState.Connected) {
+                                        Icons.Outlined.CheckCircle
+                                    } else {
+                                        Icons.Outlined.Circle
+                                    },
+                                    contentDescription = null,
+                                    tint = if (connectionState == ConnectionState.Connected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                            },
+                            supportingContent = {
                                 Text(
-                                    text = if (connectionState == ConnectionState.Connected) {
+                                    connectionState.label(),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                            headlineContent = {
+                                Text(
+                                    if (connectionState == ConnectionState.Connected) {
                                         deviceName ?: "Android device"
                                     } else {
                                         "No Android device"
                                     },
-                                    style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
                                 )
-                                Text(
-                                    text = connectionState.label(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                        RowDivider()
+                            },
+                        )
+                        ListDivider()
                         StatusRow("Bluetooth", bluetoothState.label())
-                        RowDivider()
+                        ListDivider()
                         StatusRow("Hotspot", hotspotState.label())
                     }
                 }
             }
 
             item {
-                Section(title = "Controls", icon = Icons.Outlined.PowerSettingsNew) {
+                Section("Controls", Icons.Outlined.PowerSettingsNew) {
                     SectionCard {
                         if (connectionState == ConnectionState.Connected) {
                             ActionRow(
-                                icon = Icons.Outlined.PowerSettingsNew,
-                                title = "Start hotspot",
+                                Icons.Outlined.PowerSettingsNew,
+                                "Start hotspot",
                                 enabled = hotspotState !in setOf("STARTING", "ACTIVE"),
                                 onClick = onStart,
                             )
-                            RowDivider()
+                            ListDivider()
                             ActionRow(
-                                icon = Icons.Outlined.Stop,
-                                title = "Stop hotspot",
+                                Icons.Outlined.Stop,
+                                "Stop hotspot",
                                 enabled = hotspotState == "ACTIVE",
                                 onClick = onStop,
                             )
-                            RowDivider()
+                            ListDivider()
                             ActionRow(
-                                icon = Icons.Outlined.Close,
-                                title = "Disconnect",
-                                onClick = onDisconnect,
+                                Icons.Outlined.Close,
+                                "Disconnect",
                                 destructive = true,
+                                onClick = onDisconnect,
                             )
                         } else {
                             ActionRow(
-                                icon = Icons.Outlined.Search,
-                                title = "Scan for Android device",
+                                Icons.Outlined.Search,
+                                "Scan for Android device",
                                 enabled = bluetoothState == BluetoothState.Ready,
                                 onClick = onScan,
                             )
@@ -248,22 +228,22 @@ internal fun HomeScreen(
 
             if (lastError != null) {
                 item {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Icon(
-                            Icons.Outlined.ErrorOutline,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                        Text(
-                            text = lastError,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
+                    ListItem(
+                        leadingContent = {
+                            Icon(
+                                Icons.Outlined.ErrorOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        headlineContent = {
+                            Text(
+                                lastError,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
+                    )
                 }
             }
         }
@@ -278,30 +258,21 @@ private fun Section(
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier.padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = title,
-                modifier = Modifier.padding(start = 8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (count != null) {
+        ListItem(
+            leadingContent = {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            trailingContent = count?.let {
+                { Text(it.toString(), color = MaterialTheme.colorScheme.outline) }
+            },
+            headlineContent = {
                 Text(
-                    text = count.toString(),
-                    modifier = Modifier.padding(start = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
+                    title,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
                 )
-            }
-        }
+            },
+        )
         content()
     }
 }
@@ -310,7 +281,7 @@ private fun Section(
 private fun SectionCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
@@ -326,67 +297,52 @@ private fun DeviceRow(
     isConnected: Boolean,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(
-            Icons.Outlined.SettingsInputAntenna,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = device.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = {
+            Icon(
+                Icons.Outlined.SettingsInputAntenna,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
             )
+        },
+        supportingContent = {
             Text(
-                text = "${device.id.uppercase()} · " +
+                "${device.id.uppercase()} · " +
                     if (device.rssi == 0) "Signal unavailable" else "${device.rssi} dBm",
-                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        when {
-            isConnecting -> Text(
-                "Connecting",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            isConnected -> Text(
-                "Connected",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            else -> Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = "Connect",
-                tint = MaterialTheme.colorScheme.outline,
-            )
-        }
-    }
+        },
+        trailingContent = {
+            when {
+                isConnecting -> Text(
+                    "Connecting",
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                isConnected -> Text(
+                    "Connected",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                else -> Text(">", color = MaterialTheme.colorScheme.outline)
+            }
+        },
+        headlineContent = {
+            Text(device.name, fontWeight = FontWeight.Medium)
+        },
+    )
 }
 
 @Composable
 private fun EmptyRow(icon: ImageVector, text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    ListItem(
+        leadingContent = {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+        headlineContent = { Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+    )
 }
 
 @Composable
@@ -397,51 +353,31 @@ private fun ActionRow(
     destructive: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val activeColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-    val contentColor = if (enabled) activeColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(icon, contentDescription = null, tint = contentColor)
-        Text(
-            title,
-            modifier = Modifier.weight(1f),
-            color = contentColor,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Icon(
-            Icons.Outlined.ChevronRight,
-            contentDescription = null,
-            tint = if (enabled) MaterialTheme.colorScheme.outline else contentColor,
-        )
+    val contentColor = when {
+        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        destructive -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.primary
     }
+    ListItem(
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+        leadingContent = { Icon(icon, contentDescription = null, tint = contentColor) },
+        trailingContent = { Text(">", color = contentColor) },
+        headlineContent = { Text(title, color = contentColor) },
+    )
 }
 
 @Composable
 private fun StatusRow(title: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(title, style = MaterialTheme.typography.bodyLarge)
-        Text(
-            value,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
+    ListItem(
+        trailingContent = {
+            Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+        headlineContent = { Text(title) },
+    )
 }
 
 @Composable
-private fun RowDivider() {
+private fun ListDivider() {
     HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
 }
 

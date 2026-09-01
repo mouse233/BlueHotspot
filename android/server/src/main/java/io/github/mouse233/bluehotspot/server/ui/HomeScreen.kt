@@ -3,10 +3,10 @@ package io.github.mouse233.bluehotspot.server.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -23,15 +23,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,69 +67,40 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SectionHeader("Hotspot", Icons.Outlined.PowerSettingsNew)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            Icon(
-                                imageVector = if (state.isActive()) {
-                                    Icons.Outlined.CheckCircle
-                                } else {
-                                    Icons.Outlined.Circle
-                                },
-                                contentDescription = null,
-                                tint = if (state.isActive()) {
-                                    Color(0xFF2E7D32)
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                            )
-                            Column {
-                                Text(
-                                    text = state.label(),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.SemiBold,
+                Section("Hotspot", Icons.Outlined.PowerSettingsNew) {
+                    SectionCard {
+                        ListItem(
+                            leadingContent = {
+                                Icon(
+                                    if (state.isActive()) Icons.Outlined.CheckCircle else Icons.Outlined.Circle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
+                            },
+                            supportingContent = {
                                 Text(
-                                    text = "System-configured Wi-Fi hotspot",
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    "System-configured Wi-Fi hotspot",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                            }
-                        }
+                            },
+                            headlineContent = {
+                                Text(state.label(), fontWeight = FontWeight.Medium)
+                            },
+                        )
                     }
                 }
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SectionHeader("Controls", Icons.Outlined.PowerSettingsNew)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                    ) {
+                Section("Controls", Icons.Outlined.PowerSettingsNew) {
+                    SectionCard {
                         ActionRow(
                             icon = Icons.Outlined.PowerSettingsNew,
                             title = "Start hotspot",
                             enabled = state.canStart(),
                             onClick = onStart,
                         )
-                        RowDivider()
+                        ListDivider()
                         ActionRow(
                             icon = Icons.Outlined.Stop,
                             title = "Stop hotspot",
@@ -142,61 +112,45 @@ fun HomeScreen(
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SectionHeader("Connected devices", Icons.Outlined.Devices, connectedDevices.size)
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                    ) {
+                Section("Connected devices", Icons.Outlined.Devices, connectedDevices.size) {
+                    SectionCard {
                         if (connectedDevices.isEmpty()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Bluetooth,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    "No controller connected",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        } else {
-                            connectedDevices.forEachIndexed { index, device ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
+                            ListItem(
+                                leadingContent = {
                                     Icon(
                                         Icons.Outlined.Bluetooth,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            device.name,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Medium,
+                                },
+                                headlineContent = {
+                                    Text(
+                                        "No controller connected",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                },
+                            )
+                        } else {
+                            connectedDevices.forEachIndexed { index, device ->
+                                ListItem(
+                                    leadingContent = {
+                                        Icon(
+                                            Icons.Outlined.Bluetooth,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
                                         )
+                                    },
+                                    headlineContent = {
+                                        Text(device.name, fontWeight = FontWeight.Medium)
+                                    },
+                                    supportingContent = {
                                         Text(
                                             "BLE connected · ${device.address}",
-                                            style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
-                                    }
-                                }
-                                if (index != connectedDevices.lastIndex) RowDivider()
+                                    },
+                                )
+                                if (index != connectedDevices.lastIndex) ListDivider()
                             }
                         }
                     }
@@ -207,25 +161,42 @@ fun HomeScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String, icon: ImageVector, count: Int? = null) {
-    Row(
-        modifier = Modifier.padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(
-            title,
-            modifier = Modifier.padding(start = 8.dp),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun Section(
+    title: String,
+    icon: ImageVector,
+    count: Int? = null,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ListItem(
+            leadingContent = {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            },
+            trailingContent = count?.let {
+                { Text(it.toString(), color = MaterialTheme.colorScheme.outline) }
+            },
+            headlineContent = {
+                Text(
+                    title,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
         )
-        if (count != null) {
-            Text(
-                count.toString(),
-                modifier = Modifier.padding(start = 8.dp),
-                color = MaterialTheme.colorScheme.outline,
-            )
-        }
+        content()
+    }
+}
+
+@Composable
+private fun SectionCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        content()
     }
 }
 
@@ -236,30 +207,16 @@ private fun ActionRow(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        androidx.compose.material3.TextButton(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(icon, contentDescription = null)
-                Text(title, modifier = Modifier.weight(1f))
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null)
-            }
-        }
-    }
+    ListItem(
+        modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+        leadingContent = { Icon(icon, contentDescription = null) },
+        trailingContent = { Icon(Icons.Outlined.ChevronRight, contentDescription = null) },
+        headlineContent = { Text(title) },
+    )
 }
 
 @Composable
-private fun RowDivider() {
+private fun ListDivider() {
     HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
 }
 
