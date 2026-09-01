@@ -3,7 +3,6 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var bluetooth = BluetoothCentral()
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -23,8 +22,7 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(appBackgroundColor.ignoresSafeArea())
-            .animation(.easeInOut(duration: 0.25), value: colorScheme)
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("BlueHotspot")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -43,17 +41,6 @@ struct HomeView: View {
         }
     }
 
-    private var appBackgroundColor: Color {
-        colorScheme == .dark
-            ? Color(red: 0.08, green: 0.09, blue: 0.11)
-            : Color(uiColor: .systemGroupedBackground)
-    }
-
-    private var surfaceColor: Color {
-        colorScheme == .dark
-            ? Color(red: 0.15, green: 0.16, blue: 0.18)
-            : Color(uiColor: .systemBackground)
-    }
 
     private var deviceSection: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -98,7 +85,7 @@ struct HomeView: View {
                 .foregroundStyle(.tint)
                 .padding(16)
             }
-            .background(surfaceColor, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
@@ -166,7 +153,7 @@ struct HomeView: View {
                 rowDivider
                 statusRow("Hotspot", value: bluetooth.hotspotState)
             }
-            .background(surfaceColor, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
@@ -211,7 +198,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .tint(.blue)
-            .background(surfaceColor, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }

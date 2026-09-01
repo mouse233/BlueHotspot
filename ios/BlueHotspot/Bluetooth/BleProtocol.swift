@@ -78,7 +78,13 @@ struct BleFrameDecoder {
             guard let payload = String(data: body.subdata(in: 18..<body.count), encoding: .utf8) else {
                 throw BleProtocolError.invalidUtf8
             }
-            frames.append(BleFrame(type: type, requestId: UUID(), payload: payload))
+            let requestId = UUID(uuid: (
+                body[2], body[3], body[4], body[5],
+                body[6], body[7], body[8], body[9],
+                body[10], body[11], body[12], body[13],
+                body[14], body[15], body[16], body[17]
+            ))
+            frames.append(BleFrame(type: type, requestId: requestId, payload: payload))
         }
         return frames
     }

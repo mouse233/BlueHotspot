@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "BlueHotspotAndroid"
-include(":app")
+include(":server", ":client")
