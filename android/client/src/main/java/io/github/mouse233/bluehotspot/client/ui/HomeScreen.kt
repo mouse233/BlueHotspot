@@ -1,5 +1,6 @@
 package io.github.mouse233.bluehotspot.client.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -282,8 +283,10 @@ private fun SectionCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
     ) {
         content()
@@ -376,9 +379,14 @@ private fun StatusRow(title: String, value: String) {
     )
 }
 
+
 @Composable
 private fun ListDivider() {
-    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 56.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+        thickness = 1.dp,
+    )
 }
 
 private fun BluetoothState.label(): String = when (this) {

@@ -1,5 +1,6 @@
 package io.github.mouse233.bluehotspot.server.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -192,8 +193,10 @@ private fun SectionCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
     ) {
         content()
@@ -215,9 +218,14 @@ private fun ActionRow(
     )
 }
 
+
 @Composable
 private fun ListDivider() {
-    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 56.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+        thickness = 1.dp,
+    )
 }
 
 private fun TetheringState.isActive(): Boolean =
