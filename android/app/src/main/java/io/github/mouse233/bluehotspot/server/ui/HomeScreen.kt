@@ -69,13 +69,16 @@ fun HomeScreen(
 
         Button(
             onClick = onStart,
-            enabled = state !is TetheringState.Starting && state !is TetheringState.Active,
+            enabled = state !is TetheringState.Starting &&
+                state !is TetheringState.Active &&
+                state !is TetheringState.ExternalActive,
         ) {
             Text("Start hotspot")
         }
         OutlinedButton(
             onClick = onStop,
-            enabled = state is TetheringState.Active,
+            enabled = state is TetheringState.Active ||
+                state is TetheringState.ExternalActive,
         ) {
             Text("Stop hotspot")
         }
@@ -87,6 +90,7 @@ private fun TetheringState.label(): String = when (this) {
     TetheringState.Idle -> "Idle"
     TetheringState.Starting -> "Starting"
     TetheringState.Active -> "Active"
+    TetheringState.ExternalActive -> "Active (system)"
     TetheringState.Stopping -> "Stopping"
     is TetheringState.Failed -> "Failed: $reason"
 }

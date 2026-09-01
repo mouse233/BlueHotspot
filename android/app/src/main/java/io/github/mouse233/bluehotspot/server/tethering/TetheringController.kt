@@ -15,7 +15,7 @@ sealed interface TetheringState {
     data object Idle : TetheringState
     data object Starting : TetheringState
     data object Active : TetheringState
+    data object ExternalActive : TetheringState
     data object Stopping : TetheringState
     data class Failed(val reason: String) : TetheringState
 }
-

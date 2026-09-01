@@ -269,6 +269,7 @@ internal class BleGattServer(
         val event = when (state) {
             TetheringState.Starting -> BleMessage.HOTSPOT_STARTING
             TetheringState.Active -> BleMessage.HOTSPOT_READY
+            TetheringState.ExternalActive -> BleMessage.HOTSPOT_READY
             TetheringState.Stopping -> BleMessage.STATUS
             TetheringState.Idle -> BleMessage.HOTSPOT_STOPPED
             TetheringState.Unsupported -> BleMessage.ERROR
@@ -277,6 +278,7 @@ internal class BleGattServer(
         val payload = when (state) {
             TetheringState.Starting -> "STARTING"
             TetheringState.Active -> "ACTIVE"
+            TetheringState.ExternalActive -> "ACTIVE"
             TetheringState.Stopping -> "STOPPING"
             TetheringState.Idle -> "IDLE"
             TetheringState.Unsupported -> "TETHERING_UNSUPPORTED"
@@ -306,6 +308,7 @@ internal class BleGattServer(
             TetheringState.Idle -> "IDLE"
             TetheringState.Starting -> "STARTING"
             TetheringState.Active -> "ACTIVE"
+            TetheringState.ExternalActive -> "ACTIVE"
             TetheringState.Stopping -> "STOPPING"
             TetheringState.Unsupported -> "UNSUPPORTED"
             is TetheringState.Failed -> "FAILED"
