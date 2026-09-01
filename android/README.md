@@ -1,6 +1,6 @@
 # Android applications
 
-The `:app` module is the Android hotspot server. The `:client` module is the Android controller client. The current implementation is intentionally small:
+The `:server` module is the Android hotspot server. The `:client` module is the Android controller client. The current implementation is intentionally small:
 
 - `tethering/` starts and stops the Android system-configured Wi-Fi hotspot.
 - `ui/` exposes a local diagnostic screen.
@@ -16,7 +16,7 @@ grant that permission to an ordinary APK.
 Build from this directory with the checked-in Gradle Wrapper. On Windows run:
 
 ```powershell
-.\gradlew.bat :app:assembleDebug :client:assembleDebug
+.\gradlew.bat :server:assembleDebug :client:assembleDebug
 ```
 
 Android Studio should use the Gradle Wrapper distribution configured in

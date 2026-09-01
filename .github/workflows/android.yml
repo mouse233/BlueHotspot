@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: BlueHotspot-android-server-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/server/build/outputs/apk/debug/server-debug.apk
 
       - name: Upload Android client APK
         uses: actions/upload-artifact@v6

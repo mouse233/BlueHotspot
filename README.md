@@ -71,7 +71,7 @@ signing workflow are configured.
 
 ## Repository layout
 
-- `android/` — Android server (`:app`) and Android controller client (`:client`) applications.
+- `android/` — Android server (`:server`) and Android controller client (`:client`) applications.
 - `ios/` — SwiftUI iOS controller and XcodeGen specification.
 - `protocol/` — platform-neutral BLE protocol and framing documentation.
 - `docs/` — architecture and project scope documentation.
