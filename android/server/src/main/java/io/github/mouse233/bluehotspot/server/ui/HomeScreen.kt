@@ -74,7 +74,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
                         ),
                     ) {
                         Row(
@@ -121,7 +121,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
                         ),
                     ) {
                         ActionRow(
@@ -148,7 +148,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
                         ),
                     ) {
                         if (connectedDevices.isEmpty()) {

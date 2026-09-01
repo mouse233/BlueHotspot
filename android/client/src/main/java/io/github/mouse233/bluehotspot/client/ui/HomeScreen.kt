@@ -312,7 +312,7 @@ private fun SectionCard(content: @Composable () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
     ) {
         content()
