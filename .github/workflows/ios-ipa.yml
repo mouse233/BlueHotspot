@@ -2,7 +2,7 @@ name: Build iOS IPA
 
 on:
   push:
-    branches: [main, feat/android-client]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
