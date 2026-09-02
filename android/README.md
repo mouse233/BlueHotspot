@@ -13,6 +13,18 @@ The programmatic `TetheringManager` path is API 36+ and may require a privileged
 or system installation. Declaring `TETHER_PRIVILEGED` in the manifest does not
 grant that permission to an ordinary APK.
 
+On non-rooted Android 16 devices, the server can instead use Shizuku started
+through wireless debugging. The user must install and start Shizuku, then grant
+BlueHotspot access once. BlueHotspot verifies that the UserService is running as
+ADB shell UID 2000, that its caller package is `com.android.shell`, and that the
+ROM grants shell `TETHER_PRIVILEGED` before attempting to control tethering.
+Vendor ROM support must be verified on real devices. If Shizuku is unavailable,
+the server falls back to the existing root backend.
+
+Both privileged backends start the already-configured Internet hotspot without
+reading or changing its SSID or passphrase. They retain the exact request that
+they start and refuse to stop a pre-existing system-managed hotspot.
+
 Build from this directory with the checked-in Gradle Wrapper. On Windows run:
 
 ```powershell

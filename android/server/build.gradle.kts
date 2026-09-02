@@ -25,6 +25,7 @@ android {
     }
 
     buildFeatures {
+        aidl = true
         compose = true
     }
 
@@ -52,6 +53,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.librootkotlinx)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")

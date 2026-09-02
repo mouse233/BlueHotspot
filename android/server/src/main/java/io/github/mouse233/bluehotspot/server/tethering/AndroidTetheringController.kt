@@ -28,17 +28,30 @@ class AndroidTetheringController(
     override val state: StateFlow<TetheringState> = _state.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val application = context.applicationContext as BlueHotspotApplication
     private val tetheringManager = context.getSystemService(TetheringManager::class.java)
     private val tetheringExecutor = Executor { command -> command.run() }
+    private val backends: List<TetheringBackend> = listOf(
+        ShizukuTetheringBackend(context),
+        RootTetheringBackend(application),
+    )
     private var ownsHotspot = false
     private var externalActive = false
+    private var activeBackend: TetheringBackend? = null
 
     private val tetheringEventCallback = object : TetheringManager.TetheringEventCallback {
         override fun onTetheredInterfacesChanged(interfaces: Set<TetheringInterface>) {
             val wifiActive = interfaces.any { it.getType() == TetheringManager.TETHERING_WIFI }
             Log.i(TAG, "Tethering interfaces changed: wifiActive=" + wifiActive + ", count=" + interfaces.size)
             externalActive = wifiActive
-            if (ownsHotspot) return
+            if (ownsHotspot) {
+                if (!wifiActive) {
+                    ownsHotspot = false
+                    activeBackend = null
+                    _state.value = TetheringState.Idle
+                }
+                return
+            }
 
             when {
                 wifiActive &&
@@ -85,74 +98,96 @@ class AndroidTetheringController(
 
         _state.value = TetheringState.Starting
         scope.launch {
-            val result = runCatching {
-                val application = context.applicationContext as BlueHotspotApplication
-                application.rootSession.use { it.execute(RootTetheringCommands.Start()) }
-            }.getOrElse { error ->
-                _state.value = TetheringState.Failed(
-                    "root unavailable: ${error.message ?: error.javaClass.simpleName}",
+            val failures = mutableListOf<String>()
+            for (backend in backends) {
+                val attempt = runCatching { backend.start() }
+                val result = attempt.getOrNull()
+                if (result == null) {
+                    val error = attempt.exceptionOrNull()
+                    failures += "${backend.name}: ${error.describe()}"
+                    continue
+                }
+                Log.i(
+                    TAG,
+                    "${backend.name} tethering start: error=${result.errorCode}, uid=${result.uid}",
                 )
-                return@launch
-            }
-            Log.i(TAG, "Root tethering result: error=" + result.errorCode + ", uid=" + result.uid)
-            _state.value = when {
-                result.errorCode == 0 -> {
+                if (result.errorCode == TetheringManager.TETHER_ERROR_NO_ERROR) {
                     ownsHotspot = true
-                    TetheringState.Active
+                    activeBackend = backend
+                    _state.value = TetheringState.Active
+                    return@launch
                 }
-                result.errorCode == TetheringManager.TETHER_ERROR_DUPLICATE_REQUEST -> {
+                if (result.errorCode == TetheringManager.TETHER_ERROR_DUPLICATE_REQUEST) {
                     externalActive = true
-                    TetheringState.ExternalActive
+                    activeBackend = null
+                    _state.value = TetheringState.ExternalActive
+                    return@launch
                 }
-                else -> TetheringState.Failed(
-                    "root start error=${result.errorCode}, uid=${result.uid}",
-                )
+                if (result.errorCode == TetheringBackendResult.ERROR_OPERATION_UNCERTAIN) {
+                    _state.value = TetheringState.Failed(
+                        "${backend.name}: ${result.detail}; check the hotspot before retrying",
+                    )
+                    return@launch
+                }
+                failures += "${backend.name}: error=${result.errorCode} (${result.detail})"
             }
+            _state.value = TetheringState.Failed(
+                failures.joinToString(separator = "; ").ifEmpty { "no tethering backend available" },
+            )
         }
     }
 
     override fun stop() {
         val current = _state.value
         if (
-            current == TetheringState.Idle ||
-            current == TetheringState.Unsupported ||
-            current == TetheringState.Starting ||
-            current == TetheringState.Stopping ||
-            current is TetheringState.Failed ||
-            (!ownsHotspot && current != TetheringState.ExternalActive)
+            current != TetheringState.Active || !ownsHotspot
         ) {
             return
         }
 
         _state.value = TetheringState.Stopping
         scope.launch {
-            val result = runCatching {
-                val application = context.applicationContext as BlueHotspotApplication
-                application.rootSession.use { it.execute(RootTetheringCommands.Stop()) }
-            }.getOrElse { error ->
-                _state.value = TetheringState.Failed(
-                    "root unavailable: ${error.message ?: error.javaClass.simpleName}",
-                )
+            val backend = activeBackend
+            if (backend == null) {
+                ownsHotspot = false
+                _state.value = if (externalActive) TetheringState.ExternalActive else TetheringState.Idle
                 return@launch
             }
-            Log.i(TAG, "Root tethering result: error=" + result.errorCode + ", uid=" + result.uid)
+            val attempt = runCatching { backend.stop() }
+            val result = attempt.getOrNull()
+            if (result == null) {
+                Log.e(TAG, "${backend.name} tethering stop failed", attempt.exceptionOrNull())
+                _state.value = TetheringState.Active
+                return@launch
+            }
+            Log.i(
+                TAG,
+                "${backend.name} tethering stop: error=${result.errorCode}, uid=${result.uid}",
+            )
             _state.value = when {
-                result.errorCode == 0 -> {
+                result.errorCode == TetheringManager.TETHER_ERROR_NO_ERROR -> {
                     ownsHotspot = false
                     externalActive = false
+                    activeBackend = null
                     TetheringState.Idle
                 }
-                result.errorCode == TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST &&
-                    externalActive -> {
-                    TetheringState.ExternalActive
+                result.errorCode == TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST -> {
+                    ownsHotspot = false
+                    activeBackend = null
+                    if (externalActive) TetheringState.ExternalActive else TetheringState.Idle
                 }
-                else -> TetheringState.Failed(
-                    "root stop error=${result.errorCode}, uid=${result.uid}",
-                )
+                else -> {
+                    Log.e(TAG, "${backend.name} stop error=${result.errorCode}: ${result.detail}")
+                    TetheringState.Active
+                }
             }
         }
     }
 
     private fun initialState(): TetheringState =
         if (Build.VERSION.SDK_INT >= 36) TetheringState.Idle else TetheringState.Unsupported
+
+    private fun Throwable?.describe(): String =
+        this?.let { "${it.javaClass.simpleName}: ${it.message ?: "no message"}" }
+            ?: "unknown failure"
 }

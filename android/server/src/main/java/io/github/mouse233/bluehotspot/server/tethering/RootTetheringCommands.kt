@@ -1,6 +1,5 @@
 package io.github.mouse233.bluehotspot.server.tethering
 
-import android.net.ConnectivityManager
 import android.net.TetheringManager
 import android.os.Parcelable
 import android.os.Process
@@ -61,9 +60,11 @@ object RootTetheringCommands {
         override suspend fun execute(): RootTetheringResult {
             val manager = systemContext.getSystemService(TetheringManager::class.java)
                 ?: return RootTetheringResult(-1, Process.myUid())
-            val request = activeRequest ?: TetheringManager.TetheringRequest.Builder(
-                TetheringManager.TETHERING_WIFI,
-            ).build()
+            val request = activeRequest
+                ?: return RootTetheringResult(
+                    TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST,
+                    Process.myUid(),
+                )
 
             return suspendCancellableCoroutine { continuation ->
                 try {
@@ -77,34 +78,13 @@ object RootTetheringCommands {
                             }
 
                             override fun onStopTetheringFailed(error: Int) {
-                                if (error == TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST) {
-                                    continuation.resume(stopWifiTetheringByType())
-                                } else {
-                                    continuation.resume(RootTetheringResult(error, Process.myUid()))
-                                }
+                                continuation.resume(RootTetheringResult(error, Process.myUid()))
                             }
                         },
                     )
                 } catch (_: Throwable) {
-                    continuation.resume(stopWifiTetheringByType())
+                    continuation.resume(RootTetheringResult(-2, Process.myUid()))
                 }
-            }
-        }
-
-        private fun stopWifiTetheringByType(): RootTetheringResult {
-            val connectivityManager = systemContext.getSystemService(ConnectivityManager::class.java)
-                ?: return RootTetheringResult(-1, Process.myUid())
-            return try {
-                val method = ConnectivityManager::class.java.getDeclaredMethod(
-                    "stopTethering",
-                    Int::class.javaPrimitiveType,
-                )
-                method.isAccessible = true
-                method.invoke(connectivityManager, TetheringManager.TETHERING_WIFI)
-                activeRequest = null
-                RootTetheringResult(0, Process.myUid())
-            } catch (_: Throwable) {
-                RootTetheringResult(-2, Process.myUid())
             }
         }
     }

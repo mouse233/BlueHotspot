@@ -335,7 +335,7 @@ private fun TetheringState.canStart(): Boolean =
     this != TetheringState.Starting && this != TetheringState.Active && this != TetheringState.ExternalActive
 
 private fun TetheringState.canStop(): Boolean =
-    this == TetheringState.Active || this == TetheringState.ExternalActive
+    this == TetheringState.Active
 
 private fun TetheringState.label(): String = when (this) {
     TetheringState.Unsupported -> "Unsupported on this Android version"
