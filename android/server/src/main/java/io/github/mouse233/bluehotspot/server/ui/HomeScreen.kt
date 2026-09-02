@@ -1,6 +1,7 @@
 package io.github.mouse233.bluehotspot.server.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,24 +16,36 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.mouse233.bluehotspot.server.ble.BleConnectedDevice
@@ -46,9 +59,12 @@ fun HomeScreen(
     onStart: () -> Unit,
     onStop: () -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState(),
     )
+    var menuExpanded by remember { mutableStateOf(false) }
+    var aboutDialogVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -56,6 +72,28 @@ fun HomeScreen(
             LargeTopAppBar(
                 title = { Text("BlueHotspot") },
                 scrollBehavior = scrollBehavior,
+                actions = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Outlined.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("About") },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Info, contentDescription = null)
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    aboutDialogVisible = true
+                                },
+                            )
+                        }
+                    }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -204,7 +242,34 @@ fun HomeScreen(
             }
         }
     }
+
+    if (aboutDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { aboutDialogVisible = false },
+            title = { Text("About BlueHotspot") },
+            text = {
+                Text("BlueHotspot lets an iPhone or Android client control this device's already-configured Wi-Fi hotspot over encrypted Bluetooth Low Energy (BLE).")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        aboutDialogVisible = false
+                        uriHandler.openUri(REPOSITORY_URL)
+                    },
+                ) {
+                    Text("GitHub")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { aboutDialogVisible = false }) {
+                    Text("Close")
+                }
+            },
+        )
+    }
 }
+
+private const val REPOSITORY_URL = "https://github.com/mouse233/BlueHotspot"
 
 @Composable
 private fun SectionHeader(title: String, icon: ImageVector, count: Int? = null) {

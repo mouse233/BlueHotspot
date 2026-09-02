@@ -3,6 +3,10 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var bluetooth = BluetoothCentral()
+    @Environment(\.openURL) private var openURL
+    @State private var isAboutPresented = false
+
+    private let repositoryURL = URL(string: "https://github.com/mouse233/BlueHotspot")!
 
     var body: some View {
         NavigationStack {
@@ -31,6 +35,12 @@ struct HomeView: View {
                         Toggle(isOn: $bluetooth.autoConnectEnabled) {
                             Label("Automatic connection", systemImage: "bolt.horizontal.circle")
                         }
+                        Divider()
+                        Button {
+                            isAboutPresented = true
+                        } label: {
+                            Label("About", systemImage: "info.circle")
+                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
@@ -38,6 +48,14 @@ struct HomeView: View {
                 }
             }
             .onAppear { bluetooth.startScanning() }
+            .alert("About BlueHotspot", isPresented: $isAboutPresented) {
+                Button("GitHub") {
+                    openURL(repositoryURL)
+                }
+                Button("Close", role: .cancel) {}
+            } message: {
+                Text("BlueHotspot lets an iPhone control an Android device's already-configured Wi-Fi hotspot over encrypted Bluetooth Low Energy (BLE).")
+            }
         }
     }
 
