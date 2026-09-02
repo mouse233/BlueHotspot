@@ -42,7 +42,7 @@ struct HomeView: View {
                             Label("About", systemImage: "info.circle")
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Image(systemName: "ellipsis")
                     }
                     .accessibilityLabel("Menu")
                 }
