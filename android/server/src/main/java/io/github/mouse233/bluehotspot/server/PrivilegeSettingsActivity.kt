@@ -41,6 +41,7 @@ class PrivilegeSettingsActivity : ComponentActivity() {
                     onSelectBackend = viewModel::selectBackend,
                     onRequestAuthorization = viewModel::requestAuthorization,
                     onRefresh = viewModel::refreshPrivilege,
+                    onBack = ::finish,
                     onContinue = ::finish,
                 )
             }

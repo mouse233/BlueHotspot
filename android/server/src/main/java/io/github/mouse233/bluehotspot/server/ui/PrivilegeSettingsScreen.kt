@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -42,10 +45,24 @@ fun PrivilegeSettingsScreen(
     onSelectBackend: (PrivilegeBackend) -> Unit,
     onRequestAuthorization: (PrivilegeBackend) -> Unit,
     onRefresh: (PrivilegeBackend) -> Unit,
+    onBack: () -> Unit,
     onContinue: () -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Permission settings") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Permission settings") },
+                navigationIcon = {
+                    androidx.compose.material3.IconButton(onClick = onBack) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Outlined.ChevronRight,
+                            modifier = Modifier.rotate(180f),
+                            contentDescription = "Back",
+                        )
+                    }
+                },
+            )
+        },
         bottomBar = {
             Row(
                 modifier = Modifier
