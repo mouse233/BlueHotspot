@@ -82,6 +82,7 @@ internal fun HomeScreen(
         topBar = {
             LargeTopAppBar(
                 title = { Text("BlueHotspot") },
+                scrollBehavior = scrollBehavior,
                 actions = {
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
