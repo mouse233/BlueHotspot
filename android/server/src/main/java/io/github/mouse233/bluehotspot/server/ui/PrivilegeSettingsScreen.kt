@@ -45,7 +45,7 @@ fun PrivilegeSettingsScreen(
     onContinue: () -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("权限设置") }) },
+        topBar = { TopAppBar(title = { Text("Permission settings") }) },
         bottomBar = {
             Row(
                 modifier = Modifier
@@ -54,7 +54,7 @@ fun PrivilegeSettingsScreen(
                 horizontalArrangement = Arrangement.End,
             ) {
                 Button(onClick = onContinue, enabled = state.canContinue) {
-                    Text("继续")
+                    Text("Continue")
                 }
             }
         },
@@ -69,11 +69,11 @@ fun PrivilegeSettingsScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "选择 App 获取高级系统权限的方式。",
+                        text = "Choose how BlueHotspot gets the advanced system access it needs.",
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Text(
-                        text = "请选择一种方式并完成可用性检测后继续。",
+                        text = "Select one method and complete its availability check to continue.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -153,7 +153,7 @@ private fun PrivilegeCard(
                     )
                     if (backend == PrivilegeBackend.SHIZUKU) {
                         Text(
-                            text = "推荐",
+                            text = "Recommended",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -216,27 +216,27 @@ private fun PrivilegeState.action(): PrivilegeAction? = when (this) {
     PrivilegeState.NotAuthorized,
     PrivilegeState.Denied,
     PrivilegeState.NotChecked,
-    -> PrivilegeAction("请求权限", isRequest = true)
+    -> PrivilegeAction("Request authorization", isRequest = true)
     PrivilegeState.ShizukuNotRunning,
     PrivilegeState.RootUnavailable,
     PrivilegeState.Available,
     is PrivilegeState.Failed,
-    -> PrivilegeAction("重新测试", isRequest = false)
+    -> PrivilegeAction("Test again", isRequest = false)
 }
 
 private fun PrivilegeState.isBusy(): Boolean =
     this == PrivilegeState.Requesting || this == PrivilegeState.Checking
 
 private fun PrivilegeState.label(): String = when (this) {
-    PrivilegeState.NotChecked -> "尚未检测"
-    PrivilegeState.ShizukuNotRunning -> "Shizuku 未运行"
-    PrivilegeState.RootUnavailable -> "无可用 Root"
-    PrivilegeState.NotAuthorized -> "尚未授权"
-    PrivilegeState.Requesting -> "正在请求权限"
-    PrivilegeState.Checking -> "正在检测"
-    PrivilegeState.Available -> "已授权并可用"
-    PrivilegeState.Denied -> "权限被拒绝"
-    is PrivilegeState.Failed -> "检测失败：$reason"
+    PrivilegeState.NotChecked -> "Not checked"
+    PrivilegeState.ShizukuNotRunning -> "Shizuku is not running"
+    PrivilegeState.RootUnavailable -> "No usable root access"
+    PrivilegeState.NotAuthorized -> "Authorization required"
+    PrivilegeState.Requesting -> "Requesting authorization"
+    PrivilegeState.Checking -> "Checking availability"
+    PrivilegeState.Available -> "Authorized and available"
+    PrivilegeState.Denied -> "Authorization denied"
+    is PrivilegeState.Failed -> "Check failed: $reason"
 }
 
 @Composable
@@ -254,6 +254,6 @@ private fun PrivilegeBackend.title(): String = when (this) {
 }
 
 private fun PrivilegeBackend.description(): String = when (this) {
-    PrivilegeBackend.SHIZUKU -> "通过 Shizuku 获取所需系统权限，无需直接向 App 授予 Root 权限。"
-    PrivilegeBackend.ROOT -> "直接通过 su 获取超级用户权限，适用于已经 Root 的设备。"
+    PrivilegeBackend.SHIZUKU -> "Get the required system access through Shizuku without granting the app direct root access."
+    PrivilegeBackend.ROOT -> "Use su to get superuser access directly on devices that are already rooted."
 }

@@ -50,12 +50,16 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.mouse233.bluehotspot.server.ble.BleConnectedDevice
+import io.github.mouse233.bluehotspot.server.privilege.PrivilegeBackend
+import io.github.mouse233.bluehotspot.server.privilege.PrivilegeState
+import io.github.mouse233.bluehotspot.server.privilege.PrivilegeUiState
 import io.github.mouse233.bluehotspot.server.tethering.TetheringState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: TetheringState,
+    privilegeState: PrivilegeUiState,
     connectedDevices: List<BleConnectedDevice>,
     onStart: () -> Unit,
     onStop: () -> Unit,
@@ -117,6 +121,20 @@ fun HomeScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            item {
+                val selectedPrivilegeState = privilegeState.selectedState()
+                if (selectedPrivilegeState !is PrivilegeState.Available &&
+                    selectedPrivilegeState !is PrivilegeState.Requesting &&
+                    selectedPrivilegeState !is PrivilegeState.Checking
+                ) {
+                    PrivilegeActionCard(
+                        backend = privilegeState.selectedBackend,
+                        state = selectedPrivilegeState,
+                        onClick = onOpenPrivilegeSettings,
+                    )
+                }
+            }
+
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     SectionHeader("Hotspot", Icons.Outlined.PowerSettingsNew)
@@ -282,6 +300,80 @@ fun HomeScreen(
 }
 
 private const val REPOSITORY_URL = "https://github.com/mouse233/BlueHotspot"
+
+@Composable
+private fun PrivilegeActionCard(
+    backend: PrivilegeBackend,
+    state: PrivilegeState,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Settings,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Permission setup required",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = "Select and authorize ${backend.displayName()} to control the hotspot.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = state.shortLabel(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = "Open permission settings",
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
+}
+
+private fun PrivilegeUiState.selectedState(): PrivilegeState = when (selectedBackend) {
+    PrivilegeBackend.SHIZUKU -> shizukuState
+    PrivilegeBackend.ROOT -> rootState
+}
+
+private fun PrivilegeBackend.displayName(): String = when (this) {
+    PrivilegeBackend.SHIZUKU -> "Shizuku"
+    PrivilegeBackend.ROOT -> "Root"
+}
+
+private fun PrivilegeState.shortLabel(): String = when (this) {
+    PrivilegeState.NotChecked -> "Not checked"
+    PrivilegeState.ShizukuNotRunning -> "Shizuku is not running"
+    PrivilegeState.RootUnavailable -> "No usable root access"
+    PrivilegeState.NotAuthorized -> "Authorization required"
+    PrivilegeState.Requesting -> "Requesting authorization"
+    PrivilegeState.Checking -> "Checking availability"
+    PrivilegeState.Available -> "Available"
+    PrivilegeState.Denied -> "Authorization denied"
+    is PrivilegeState.Failed -> "Check failed: $reason"
+}
 
 @Composable
 private fun SectionHeader(title: String, icon: ImageVector, count: Int? = null) {

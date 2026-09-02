@@ -8,6 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +51,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -52,26 +60,41 @@ class MainActivity : ComponentActivity() {
                 val state by viewModel.state.collectAsState()
                 val privilegeState by viewModel.privilegeState.collectAsState()
                 val connectedDevices by viewModel.connectedDevices.collectAsState()
-                var showPrivilegeSettings by rememberSaveable { mutableStateOf(true) }
-                if (showPrivilegeSettings) {
-                    PrivilegeSettingsScreen(
-                        state = privilegeState,
-                        onSelectBackend = viewModel::selectBackend,
-                        onRequestAuthorization = viewModel::requestAuthorization,
-                        onRefresh = viewModel::refreshPrivilege,
-                        onContinue = {
-                            showPrivilegeSettings = false
-                            startBleIfPermitted()
-                        },
-                    )
-                } else {
-                    HomeScreen(
-                        state = state,
-                        connectedDevices = connectedDevices,
-                        onStart = viewModel::start,
-                        onStop = viewModel::stop,
-                        onOpenPrivilegeSettings = { showPrivilegeSettings = true },
-                    )
+                var showPrivilegeSettings by rememberSaveable { mutableStateOf(false) }
+                AnimatedContent(
+                    targetState = showPrivilegeSettings,
+                    label = "screen transition",
+                    transitionSpec = {
+                        if (targetState) {
+                            (slideInHorizontally { it } + fadeIn()) togetherWith
+                                (slideOutHorizontally { -it / 4 } + fadeOut())
+                        } else {
+                            (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith
+                                (slideOutHorizontally { it } + fadeOut())
+                        }
+                    },
+                ) { settingsVisible ->
+                    if (settingsVisible) {
+                        PrivilegeSettingsScreen(
+                            state = privilegeState,
+                            onSelectBackend = viewModel::selectBackend,
+                            onRequestAuthorization = viewModel::requestAuthorization,
+                            onRefresh = viewModel::refreshPrivilege,
+                            onContinue = {
+                                showPrivilegeSettings = false
+                                startBleIfPermitted()
+                            },
+                        )
+                    } else {
+                        HomeScreen(
+                            state = state,
+                            privilegeState = privilegeState,
+                            connectedDevices = connectedDevices,
+                            onStart = viewModel::start,
+                            onStop = viewModel::stop,
+                            onOpenPrivilegeSettings = { showPrivilegeSettings = true },
+                        )
+                    }
                 }
             }
         }

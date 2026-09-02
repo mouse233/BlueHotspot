@@ -34,7 +34,7 @@ class BleControlForegroundService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setContentTitle("BlueHotspot")
-            .setContentText("等待 BLE 控制端连接")
+            .setContentText("Waiting for a BLE controller to connect")
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setContentIntent(

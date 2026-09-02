@@ -38,7 +38,7 @@ class PrivilegeController(
         get() = settings.selectedBackend.value
 
     init {
-        refresh(PrivilegeBackend.SHIZUKU)
+        refresh(settings.selectedBackend.value)
     }
 
     fun selectBackend(backend: PrivilegeBackend) {
