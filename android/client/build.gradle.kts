@@ -11,8 +11,16 @@ android {
         applicationId = "io.github.mouse233.bluehotspot.client"
         minSdk = 36
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.1"
+    }
+
+    buildTypes {
+        release {
+            optimization {
+                enable = true
+            }
+        }
     }
 
     buildFeatures {
