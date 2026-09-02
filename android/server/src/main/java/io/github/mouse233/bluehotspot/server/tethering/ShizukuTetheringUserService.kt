@@ -120,10 +120,6 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
             callback.report(ERROR_WRONG_UID, "expected shell uid $SHELL_UID")
             return null
         }
-        if (context.opPackageName != SHELL_PACKAGE) {
-            callback.report(ERROR_WRONG_PACKAGE, "caller package=${context.opPackageName}")
-            return null
-        }
         if (!hasTetheringPermission()) {
             callback.report(ERROR_MISSING_PERMISSION, "shell lacks TETHER_PRIVILEGED")
             return null

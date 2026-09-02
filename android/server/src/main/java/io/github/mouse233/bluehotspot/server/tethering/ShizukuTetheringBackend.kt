@@ -70,11 +70,6 @@ internal class ShizukuTetheringBackend(
         if (remote.uid != SHELL_UID) {
             throw ShizukuUnavailableException("UserService has unexpected uid=${remote.uid}")
         }
-        if (remote.opPackageName != SHELL_PACKAGE) {
-            throw ShizukuUnavailableException(
-                "UserService caller package is ${remote.opPackageName.ifEmpty { "unavailable" }}",
-            )
-        }
         if (!remote.hasTetheringPermission()) {
             throw ShizukuUnavailableException("ADB shell lacks TETHER_PRIVILEGED on this device")
         }
@@ -161,7 +156,6 @@ internal class ShizukuTetheringBackend(
 
     private companion object {
         const val SHELL_UID = 2000
-        const val SHELL_PACKAGE = "com.android.shell"
         const val MIN_SHIZUKU_VERSION = 13
         const val USER_SERVICE_VERSION = 1
         const val PERMISSION_REQUEST_CODE = 0x4248
