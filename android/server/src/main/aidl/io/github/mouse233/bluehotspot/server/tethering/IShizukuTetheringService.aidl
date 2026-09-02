@@ -8,6 +8,7 @@ interface IShizukuTetheringService {
     boolean hasTetheringPermission() = 3;
     oneway void start(IShizukuTetheringResultCallback callback) = 4;
     oneway void stop(IShizukuTetheringResultCallback callback) = 5;
+    oneway void check(IShizukuTetheringResultCallback callback) = 6;
 
     // Reserved by Shizuku for removing a UserService after an app update.
     void destroy() = 16777114;

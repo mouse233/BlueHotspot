@@ -5,6 +5,7 @@ import android.net.TetheringManager
 import android.os.Build
 import android.util.Log
 import io.github.mouse233.bluehotspot.server.BlueHotspotApplication
+import io.github.mouse233.bluehotspot.server.privilege.PrivilegeController
 import java.util.concurrent.Executor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +16,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Controls the device's existing Internet hotspot through a KernelSU root
- * app_process. The app never reads or changes the SSID/password.
+ * Controls the device's existing Internet hotspot through the user-selected
+ * Shizuku or Root backend. The app never reads or changes the SSID/password.
  */
 class AndroidTetheringController(
     private val context: android.content.Context,
+    private val privileges: PrivilegeController,
 ) : TetheringController {
     private companion object {
         const val TAG = "BlueHotspotTether"
@@ -31,10 +33,6 @@ class AndroidTetheringController(
     private val application = context.applicationContext as BlueHotspotApplication
     private val tetheringManager = context.getSystemService(TetheringManager::class.java)
     private val tetheringExecutor = Executor { command -> command.run() }
-    private val backends: List<TetheringBackend> = listOf(
-        ShizukuTetheringBackend(context),
-        RootTetheringBackend(application),
-    )
     private var ownsHotspot = false
     private var externalActive = false
     private var activeBackend: TetheringBackend? = null
@@ -98,42 +96,41 @@ class AndroidTetheringController(
 
         _state.value = TetheringState.Starting
         scope.launch {
-            val failures = mutableListOf<String>()
-            for (backend in backends) {
-                val attempt = runCatching { backend.start() }
-                val result = attempt.getOrNull()
-                if (result == null) {
-                    val error = attempt.exceptionOrNull()
-                    failures += "${backend.name}: ${error.describe()}"
-                    continue
-                }
-                Log.i(
-                    TAG,
-                    "${backend.name} tethering start: error=${result.errorCode}, uid=${result.uid}",
+            val backend = privileges.backendFor(privileges.selectedBackend)
+            val attempt = runCatching { backend.start() }
+            val result = attempt.getOrNull()
+            if (result == null) {
+                _state.value = TetheringState.Failed(
+                    "${backend.name}: ${attempt.exceptionOrNull().describe()}",
                 )
-                if (result.errorCode == TetheringManager.TETHER_ERROR_NO_ERROR) {
+                return@launch
+            }
+            Log.i(
+                TAG,
+                "${backend.name} tethering start: error=${result.errorCode}, uid=${result.uid}",
+            )
+            when {
+                result.errorCode == TetheringManager.TETHER_ERROR_NO_ERROR -> {
                     ownsHotspot = true
                     activeBackend = backend
                     _state.value = TetheringState.Active
-                    return@launch
                 }
-                if (result.errorCode == TetheringManager.TETHER_ERROR_DUPLICATE_REQUEST) {
+                result.errorCode == TetheringManager.TETHER_ERROR_DUPLICATE_REQUEST -> {
                     externalActive = true
                     activeBackend = null
                     _state.value = TetheringState.ExternalActive
-                    return@launch
                 }
-                if (result.errorCode == TetheringBackendResult.ERROR_OPERATION_UNCERTAIN) {
+                result.errorCode == TetheringBackendResult.ERROR_OPERATION_UNCERTAIN -> {
                     _state.value = TetheringState.Failed(
                         "${backend.name}: ${result.detail}; check the hotspot before retrying",
                     )
-                    return@launch
                 }
-                failures += "${backend.name}: error=${result.errorCode} (${result.detail})"
+                else -> {
+                    _state.value = TetheringState.Failed(
+                        "${backend.name}: error=${result.errorCode} (${result.detail})",
+                    )
+                }
             }
-            _state.value = TetheringState.Failed(
-                failures.joinToString(separator = "; ").ifEmpty { "no tethering backend available" },
-            )
         }
     }
 

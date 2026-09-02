@@ -4,6 +4,8 @@ import android.app.Application
 import be.mygod.librootkotlinx.RootServer
 import be.mygod.librootkotlinx.RootSession
 import io.github.mouse233.bluehotspot.server.ble.BleGattServer
+import io.github.mouse233.bluehotspot.server.privilege.PrivilegeController
+import io.github.mouse233.bluehotspot.server.settings.PrivilegeSettingsRepository
 import io.github.mouse233.bluehotspot.server.tethering.AndroidTetheringController
 import io.github.mouse233.bluehotspot.server.tethering.TetheringController
 
@@ -12,6 +14,9 @@ class BlueHotspotApplication : Application() {
         private set
 
     lateinit var tetheringController: TetheringController
+        private set
+
+    lateinit var privilegeController: PrivilegeController
         private set
 
     internal lateinit var bleGattServer: BleGattServer
@@ -24,7 +29,9 @@ class BlueHotspotApplication : Application() {
                 server.init(this@BlueHotspotApplication)
             }
         }
-        tetheringController = AndroidTetheringController(this)
+        val settings = PrivilegeSettingsRepository(this)
+        privilegeController = PrivilegeController(this, this, settings)
+        tetheringController = AndroidTetheringController(this, privilegeController)
         bleGattServer = BleGattServer(this, tetheringController)
     }
 }

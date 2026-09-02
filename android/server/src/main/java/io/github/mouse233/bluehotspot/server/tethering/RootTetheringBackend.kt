@@ -7,6 +7,14 @@ internal class RootTetheringBackend(
 ) : TetheringBackend {
     override val name: String = "root"
 
+    override suspend fun requestAuthorization(): TetheringBackendResult =
+        checkAvailability()
+
+    override suspend fun checkAvailability(): TetheringBackendResult =
+        application.rootSession.use { session ->
+            session.execute(RootTetheringCommands.Check()).toBackendResult()
+        }
+
     override suspend fun start(): TetheringBackendResult =
         application.rootSession.use { session ->
             session.execute(RootTetheringCommands.Start()).toBackendResult()

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PowerSettingsNew
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -58,6 +59,7 @@ fun HomeScreen(
     connectedDevices: List<BleConnectedDevice>,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onOpenPrivilegeSettings: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
@@ -81,6 +83,16 @@ fun HomeScreen(
                             expanded = menuExpanded,
                             onDismissRequest = { menuExpanded = false },
                         ) {
+                            DropdownMenuItem(
+                                text = { Text("Permission method") },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Settings, contentDescription = null)
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onOpenPrivilegeSettings()
+                                },
+                            )
                             DropdownMenuItem(
                                 text = { Text("About") },
                                 leadingIcon = {

@@ -7,11 +7,16 @@ internal data class TetheringBackendResult(
 ) {
     companion object {
         const val ERROR_OPERATION_UNCERTAIN = -10_000
+        const val ERROR_NOT_ROOT = -3
     }
 }
 
 internal interface TetheringBackend {
     val name: String
+
+    suspend fun requestAuthorization(): TetheringBackendResult
+
+    suspend fun checkAvailability(): TetheringBackendResult
 
     suspend fun start(): TetheringBackendResult
 

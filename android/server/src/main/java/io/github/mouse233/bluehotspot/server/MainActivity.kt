@@ -10,12 +10,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.github.mouse233.bluehotspot.server.ble.BleControlForegroundService
 import io.github.mouse233.bluehotspot.server.ui.AppViewModel
 import io.github.mouse233.bluehotspot.server.ui.HomeScreen
+import io.github.mouse233.bluehotspot.server.ui.PrivilegeSettingsScreen
 import io.github.mouse233.bluehotspot.server.ui.theme.BlueHotspotTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,6 +38,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 AppViewModel(
                     app.tetheringController,
+                    app.privilegeController,
                     app.bleGattServer.connectedDevices,
                 ) as T
         }
@@ -42,17 +47,32 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        startBleIfPermitted()
         setContent {
             BlueHotspotTheme {
                 val state by viewModel.state.collectAsState()
+                val privilegeState by viewModel.privilegeState.collectAsState()
                 val connectedDevices by viewModel.connectedDevices.collectAsState()
-                HomeScreen(
-                    state = state,
-                    connectedDevices = connectedDevices,
-                    onStart = viewModel::start,
-                    onStop = viewModel::stop,
-                )
+                var showPrivilegeSettings by rememberSaveable { mutableStateOf(true) }
+                if (showPrivilegeSettings) {
+                    PrivilegeSettingsScreen(
+                        state = privilegeState,
+                        onSelectBackend = viewModel::selectBackend,
+                        onRequestAuthorization = viewModel::requestAuthorization,
+                        onRefresh = viewModel::refreshPrivilege,
+                        onContinue = {
+                            showPrivilegeSettings = false
+                            startBleIfPermitted()
+                        },
+                    )
+                } else {
+                    HomeScreen(
+                        state = state,
+                        connectedDevices = connectedDevices,
+                        onStart = viewModel::start,
+                        onStop = viewModel::stop,
+                        onOpenPrivilegeSettings = { showPrivilegeSettings = true },
+                    )
+                }
             }
         }
     }

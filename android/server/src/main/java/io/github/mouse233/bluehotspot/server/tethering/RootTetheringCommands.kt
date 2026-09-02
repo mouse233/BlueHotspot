@@ -22,6 +22,26 @@ object RootTetheringCommands {
     private var activeRequest: TetheringManager.TetheringRequest? = null
 
     @Parcelize
+    class Check : RootCommand<RootTetheringResult> {
+        override suspend fun execute(): RootTetheringResult {
+            val uid = Process.myUid()
+            val idOutput = runCatching {
+                val process = ProcessBuilder("id").start()
+                try {
+                    process.inputStream.bufferedReader().readText().trim()
+                } finally {
+                    process.destroy()
+                }
+            }.getOrDefault("")
+            val verified = uid == 0 && idOutput.contains("uid=0(")
+            return RootTetheringResult(
+                if (verified) 0 else TetheringBackendResult.ERROR_NOT_ROOT,
+                uid,
+            )
+        }
+    }
+
+    @Parcelize
     class Start : RootCommand<RootTetheringResult> {
         override suspend fun execute(): RootTetheringResult {
             val manager = systemContext.getSystemService(TetheringManager::class.java)
@@ -88,4 +108,5 @@ object RootTetheringCommands {
             }
         }
     }
+
 }

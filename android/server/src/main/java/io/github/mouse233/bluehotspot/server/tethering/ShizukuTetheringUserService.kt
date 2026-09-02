@@ -103,6 +103,22 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
         }
     }
 
+    override fun check(callback: IShizukuTetheringResultCallback) {
+        val manager = managerOrReport(callback) ?: return
+        try {
+            val supported = manager.javaClass
+                .getMethod("isTetheringSupported", String::class.java)
+                .invoke(manager, SHELL_PACKAGE) as Boolean
+            callback.report(
+                if (supported) TetheringManager.TETHER_ERROR_NO_ERROR
+                else TetheringManager.TETHER_ERROR_UNSUPPORTED,
+                if (supported) "tethering supported" else "tethering unsupported",
+            )
+        } catch (error: Throwable) {
+            callback.report(ERROR_EXCEPTION, error.describe())
+        }
+    }
+
     override fun destroy() {
         // Never stop by tethering type here: losing the request must fail closed.
         exitProcess(0)

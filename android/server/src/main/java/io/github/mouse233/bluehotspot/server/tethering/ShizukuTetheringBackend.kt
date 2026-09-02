@@ -45,26 +45,31 @@ internal class ShizukuTetheringBackend(
     }
 
     override suspend fun start(): TetheringBackendResult {
-        val remote = prepareService()
+        val remote = prepareService(requestPermission = true)
         return invokeRemote(remote::start)
     }
 
     override suspend fun stop(): TetheringBackendResult {
-        val remote = prepareService()
+        val remote = prepareService(requestPermission = true)
         return invokeRemote(remote::stop)
     }
 
-    private suspend fun prepareService(): IShizukuTetheringService {
+    override suspend fun requestAuthorization(): TetheringBackendResult {
         awaitBinder()
+        validateShizukuVersionAndUid()
         ensurePermission()
-        if (Shizuku.getVersion() < MIN_SHIZUKU_VERSION) {
-            throw ShizukuUnavailableException("Shizuku v13 or newer is required")
-        }
-        if (Shizuku.getUid() != SHELL_UID) {
-            throw ShizukuUnavailableException(
-                "Shizuku must run through wireless debugging (uid=${Shizuku.getUid()})",
-            )
-        }
+        return TetheringBackendResult(0, Shizuku.getUid(), "permission granted")
+    }
+
+    override suspend fun checkAvailability(): TetheringBackendResult {
+        val remote = prepareService(requestPermission = false)
+        return invokeRemote(remote::check)
+    }
+
+    private suspend fun prepareService(requestPermission: Boolean): IShizukuTetheringService {
+        awaitBinder()
+        validateShizukuVersionAndUid()
+        if (requestPermission) ensurePermission() else ensurePermissionGranted()
 
         val remote = service?.takeIf { it.asBinder().isBinderAlive } ?: bindService()
         if (remote.uid != SHELL_UID) {
@@ -74,6 +79,17 @@ internal class ShizukuTetheringBackend(
             throw ShizukuUnavailableException("ADB shell lacks TETHER_PRIVILEGED on this device")
         }
         return remote
+    }
+
+    private fun validateShizukuVersionAndUid() {
+        if (Shizuku.getVersion() < MIN_SHIZUKU_VERSION) {
+            throw ShizukuUnavailableException("Shizuku v13 or newer is required")
+        }
+        if (Shizuku.getUid() != SHELL_UID) {
+            throw ShizukuUnavailableException(
+                "Shizuku must run through wireless debugging (uid=${Shizuku.getUid()})",
+            )
+        }
     }
 
     private suspend fun awaitBinder() {
@@ -110,6 +126,12 @@ internal class ShizukuTetheringBackend(
             }
         } finally {
             Shizuku.removeRequestPermissionResultListener(listener)
+        }
+    }
+
+    private fun ensurePermissionGranted() {
+        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
+            throw ShizukuUnavailableException("Shizuku permission is not granted")
         }
     }
 

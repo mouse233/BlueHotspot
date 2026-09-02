@@ -18,8 +18,9 @@ through wireless debugging. The user must install and start Shizuku, then grant
 BlueHotspot access once. BlueHotspot verifies that the UserService is running as
 ADB shell UID 2000, that its caller package is `com.android.shell`, and that the
 ROM grants shell `TETHER_PRIVILEGED` before attempting to control tethering.
-Vendor ROM support must be verified on real devices. If Shizuku is unavailable,
-the server falls back to the existing root backend.
+Vendor ROM support must be verified on real devices. In the app's permission
+settings, the user explicitly chooses Shizuku or Root; the selected backend is
+used exclusively and failures are reported instead of silently falling back.
 
 Both privileged backends start the already-configured Internet hotspot without
 reading or changing its SSID or passphrase. They retain the exact request that
