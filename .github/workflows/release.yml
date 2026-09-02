@@ -82,10 +82,10 @@ jobs:
         include:
           - app: server
             module: server
-            alias: server
+            alias: bluehotspot-android-server
           - app: client
             module: client
-            alias: client
+            alias: bluehotspot-android-client
 
     steps:
       - name: Check out source
@@ -121,7 +121,7 @@ jobs:
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_SIGNING_KEY_ALIAS: ${{ matrix.alias }}
-          ANDROID_SIGNING_KEY_PASSWORD: ${{ matrix.alias == 'server' && secrets.ANDROID_SERVER_KEY_PASSWORD || secrets.ANDROID_CLIENT_KEY_PASSWORD }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ matrix.app == 'server' && secrets.ANDROID_SERVER_KEY_PASSWORD || secrets.ANDROID_CLIENT_KEY_PASSWORD }}
         run: |
           set -euo pipefail
 
