@@ -1,12 +1,15 @@
 package io.github.mouse233.bluehotspot.server.tethering
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.net.TetheringManager
+import android.os.IBinder
 import android.os.Process
 import android.os.RemoteException
 import androidx.annotation.Keep
 import java.util.concurrent.Executor
+import java.util.function.Supplier
 import kotlin.system.exitProcess
 
 /** Runs under Shizuku's ADB shell identity and owns the exact tethering request it starts. */
@@ -22,10 +25,7 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
     @Keep
     constructor(context: Context) {
         runCatching {
-            shellContext = context.createPackageContext(
-                SHELL_PACKAGE,
-                Context.CONTEXT_IGNORE_SECURITY,
-            )
+            shellContext = ShellOpPackageContext(context)
             initializationError = null
         }.onFailure { error ->
             initializationError = error.message ?: error.javaClass.simpleName
@@ -124,9 +124,23 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
             callback.report(ERROR_MISSING_PERMISSION, "shell lacks TETHER_PRIVILEGED")
             return null
         }
-        return context.getSystemService(TetheringManager::class.java).also { manager ->
+        return createTetheringManager(context).also { manager ->
             if (manager == null) callback.report(ERROR_INITIALIZATION, "TetheringManager unavailable")
         }
+    }
+
+    private fun createTetheringManager(context: Context): TetheringManager? {
+        val binder = runCatching {
+            Class.forName("android.os.ServiceManager")
+                .getMethod("getService", String::class.java)
+                .invoke(null, "tethering") as? IBinder
+        }.getOrNull() ?: return null
+
+        return runCatching {
+            Class.forName("android.net.TetheringManager")
+                .getConstructor(Context::class.java, Supplier::class.java)
+                .newInstance(context, Supplier { binder }) as TetheringManager
+        }.getOrNull()
     }
 
     private fun IShizukuTetheringResultCallback.report(errorCode: Int, detail: String) {
@@ -139,6 +153,10 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
 
     private fun Throwable.describe(): String =
         "${javaClass.simpleName}: ${message ?: "no message"}"
+
+    private class ShellOpPackageContext(base: Context) : ContextWrapper(base) {
+        override fun getOpPackageName(): String = SHELL_PACKAGE
+    }
 
     private companion object {
         const val SHELL_UID = 2000
