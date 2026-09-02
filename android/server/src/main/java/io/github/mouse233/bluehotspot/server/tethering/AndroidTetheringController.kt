@@ -136,20 +136,13 @@ class AndroidTetheringController(
 
     override fun stop() {
         val current = _state.value
-        if (
-            current != TetheringState.Active || !ownsHotspot
-        ) {
+        if (current != TetheringState.Active && current != TetheringState.ExternalActive) {
             return
         }
 
         _state.value = TetheringState.Stopping
         scope.launch {
-            val backend = activeBackend
-            if (backend == null) {
-                ownsHotspot = false
-                _state.value = if (externalActive) TetheringState.ExternalActive else TetheringState.Idle
-                return@launch
-            }
+            val backend = activeBackend ?: privileges.backendFor(privileges.selectedBackend)
             val attempt = runCatching { backend.stop() }
             val result = attempt.getOrNull()
             if (result == null) {

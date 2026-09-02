@@ -80,11 +80,9 @@ object RootTetheringCommands {
         override suspend fun execute(): RootTetheringResult {
             val manager = systemContext.getSystemService(TetheringManager::class.java)
                 ?: return RootTetheringResult(-1, Process.myUid())
-            val request = activeRequest
-                ?: return RootTetheringResult(
-                    TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST,
-                    Process.myUid(),
-                )
+            val request = activeRequest ?: TetheringManager.TetheringRequest.Builder(
+                TetheringManager.TETHERING_WIFI,
+            ).build()
 
             return suspendCancellableCoroutine { continuation ->
                 try {

@@ -77,11 +77,9 @@ class ShizukuTetheringUserService : IShizukuTetheringService.Stub {
 
     override fun stop(callback: IShizukuTetheringResultCallback) {
         val manager = managerOrReport(callback) ?: return
-        val request = activeRequest
-        if (request == null) {
-            callback.report(TetheringManager.TETHER_ERROR_UNKNOWN_REQUEST, "no owned request")
-            return
-        }
+        val request = activeRequest ?: TetheringManager.TetheringRequest.Builder(
+            TetheringManager.TETHERING_WIFI,
+        ).build()
 
         try {
             manager.stopTethering(

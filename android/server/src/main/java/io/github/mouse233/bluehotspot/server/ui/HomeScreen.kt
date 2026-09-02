@@ -44,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -142,7 +141,11 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            containerColor = if (state.isActive()) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainer
+                            },
                         ),
                     ) {
                         Row(
@@ -160,7 +163,7 @@ fun HomeScreen(
                                 },
                                 contentDescription = null,
                                 tint = if (state.isActive()) {
-                                    Color(0xFF2E7D32)
+                                    MaterialTheme.colorScheme.onPrimary
                                 } else {
                                     MaterialTheme.colorScheme.primary
                                 },
@@ -170,11 +173,20 @@ fun HomeScreen(
                                     text = state.label(),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.SemiBold,
+                                    color = if (state.isActive()) {
+                                        MaterialTheme.colorScheme.onPrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
                                 )
                                 Text(
-                                    text = "System-configured Wi-Fi hotspot",
+                                    text = "Permission method: ${privilegeState.selectedBackend.displayName()}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (state.isActive()) {
+                                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
                                 )
                             }
                         }
@@ -439,7 +451,7 @@ private fun TetheringState.canStart(): Boolean =
     this != TetheringState.Starting && this != TetheringState.Active && this != TetheringState.ExternalActive
 
 private fun TetheringState.canStop(): Boolean =
-    this == TetheringState.Active
+    this == TetheringState.Active || this == TetheringState.ExternalActive
 
 private fun TetheringState.label(): String = when (this) {
     TetheringState.Unsupported -> "Unsupported on this Android version"
