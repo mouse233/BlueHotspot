@@ -22,9 +22,9 @@ Vendor ROM support must be verified on real devices. In the app's permission
 settings, the user explicitly chooses Shizuku or Root; the selected backend is
 used exclusively and failures are reported instead of silently falling back.
 
-Both privileged backends start the already-configured Internet hotspot without
-reading or changing its SSID or passphrase. They retain the exact request that
-they start and refuse to stop a pre-existing system-managed hotspot.
+Both privileged backends start and stop the already-configured Internet hotspot without
+reading or changing its SSID or passphrase. The selected backend is used exclusively;
+failure is reported instead of silently falling back.
 
 Build from this directory with the checked-in Gradle Wrapper. On Windows run:
 

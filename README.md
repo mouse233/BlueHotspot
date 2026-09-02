@@ -3,7 +3,7 @@
 
 BlueHotspot is a native Android + iOS utility that lets an iPhone
 control an Android device's already-configured Wi-Fi hotspot over encrypted
-Bluetooth Low Energy (BLE). The Android server requires ROOT access.
+Bluetooth Low Energy (BLE). The Android server requires either a verified Shizuku session or ROOT access, selected explicitly in Permission settings.
 
 
 <a href="https://github.com/mouse233/BlueHotspot/releases/latest"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/main/get-it-on-github.png" alt="Get it on GitHub" height="60"></a>
@@ -19,7 +19,7 @@ The project is split into a hotspot server and controller clients.
 ### Android server
 
 - Android 16 (API 36) or newer.
-- A KernelSU-compatible ROOT-enabled Android device with the required tethering capability.
+- A Shizuku v13+ session through wireless debugging, or a KernelSU-compatible ROOT-enabled Android device, depending on the selected permission method.
 - Bluetooth permissions and an enabled Bluetooth adapter.
 - The Android app must remain installed and its BLE foreground service must be
   allowed to run.
@@ -33,6 +33,10 @@ The project is split into a hotspot server and controller clients.
 
 - iOS 17 or newer.
 - Bluetooth permission.
+
+## Version 1.1.0
+
+This release adds explicit permission-method selection on the Android server. Users can choose Shizuku or Root, authorize the selected backend, and run a real availability check before controlling the already-configured hotspot. The app never silently switches to the other backend.
 
 ## Current status
 
