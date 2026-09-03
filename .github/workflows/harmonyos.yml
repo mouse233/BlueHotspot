@@ -101,6 +101,8 @@ jobs:
           tools_root="$(dirname "$(dirname "$hvigorw_path")")"
           chmod +x "$tools_root/bin/hvigorw" "$tools_root/bin/ohpm"
           echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
+          echo "DEVECO_SDK_HOME=$tools_root/sdk" >> "$GITHUB_ENV"
+          echo "OHOS_SDK_HOME=$tools_root/sdk/default/openharmony" >> "$GITHUB_ENV"
           echo "$tools_root/bin" >> "$GITHUB_PATH"
 
       - name: Save HarmonyOS Command Line Tools cache
