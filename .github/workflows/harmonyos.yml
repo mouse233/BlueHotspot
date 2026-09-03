@@ -121,7 +121,6 @@ jobs:
           echo "HARMONY_HVIGORW=$hvigorw_path" >> "$GITHUB_ENV"
           echo "HARMONY_OHPM=$ohpm_path" >> "$GITHUB_ENV"
           echo "DEVECO_SDK_HOME=$tools_root/sdk" >> "$GITHUB_ENV"
-          echo "OHOS_SDK_HOME=$tools_root/sdk/default/openharmony" >> "$GITHUB_ENV"
           echo "$(dirname "$hvigorw_path")" >> "$GITHUB_PATH"
           echo "$(dirname "$ohpm_path")" >> "$GITHUB_PATH"
 
