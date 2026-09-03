@@ -47,8 +47,10 @@ by the DevEco installation. A local debug HAP can be built with the discovered
 
 The repository includes `.github/workflows/harmonyos.yml`, which uses the
 standard `ubuntu-latest` GitHub-hosted runner. GitHub's runner image does not
-include Huawei's HarmonyOS toolchain, so configure the repository variable
-`HARMONY_COMMAND_LINE_TOOLS_URL` with a direct URL to the Linux Command Line
-Tools ZIP. Optionally set `HARMONY_COMMAND_LINE_TOOLS_SHA256` to verify the
-download. The workflow then installs `ohpm` dependencies, runs `assembleApp`,
-and uploads the unsigned HAP and APP outputs.
+include Huawei's HarmonyOS toolchain, so the workflow downloads the Linux
+Command Line Tools archive from the configured default URL. The URL can be
+overridden with the repository variable `HARMONY_COMMAND_LINE_TOOLS_URL` or
+the `command_line_tools_url` input when starting `workflow_dispatch`.
+Optionally set `HARMONY_COMMAND_LINE_TOOLS_SHA256` to verify the download. The
+workflow then installs `ohpm` dependencies, runs `assembleApp`, and uploads the
+unsigned HAP and APP outputs.

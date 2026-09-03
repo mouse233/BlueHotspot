@@ -41,18 +41,10 @@ jobs:
 
       - name: Download HarmonyOS Command Line Tools
         env:
-          TOOLS_URL: ${{ inputs.command_line_tools_url || vars.HARMONY_COMMAND_LINE_TOOLS_URL }}
+          TOOLS_URL: ${{ inputs.command_line_tools_url || vars.HARMONY_COMMAND_LINE_TOOLS_URL || 'https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-6.0.1.251.zip' }}
           TOOLS_SHA256: ${{ vars.HARMONY_COMMAND_LINE_TOOLS_SHA256 }}
         run: |
           set -euo pipefail
-
-          if [[ -z "${TOOLS_URL//[[:space:]]/}" ]]; then
-            echo "HARMONY_COMMAND_LINE_TOOLS_URL is not configured." >&2
-            echo "Set a repository variable with a direct Huawei Linux Command Line Tools ZIP URL," >&2
-            echo "or provide command_line_tools_url when starting workflow_dispatch." >&2
-            echo "The URL must point to the Linux package containing bin/hvigorw." >&2
-            exit 1
-          fi
 
           archive="$RUNNER_TEMP/harmony-command-line-tools.zip"
           extract="$RUNNER_TEMP/harmony-command-line-tools"
