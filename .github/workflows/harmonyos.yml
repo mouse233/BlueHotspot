@@ -125,6 +125,10 @@ jobs:
           echo "$(dirname "$hvigorw_path")" >> "$GITHUB_PATH"
           echo "$(dirname "$ohpm_path")" >> "$GITHUB_PATH"
 
+          echo "Bundled SDK layout:"
+          find "$tools_root/sdk" -maxdepth 3 -type f \( -name 'oh-uni-package.json' -o -name 'uni-package.json' \) -print | sort
+          find "$tools_root/sdk/default" -maxdepth 2 -type d -print | sort
+
       - name: Save HarmonyOS Command Line Tools cache
         if: ${{ always() && steps.harmony-tools-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
