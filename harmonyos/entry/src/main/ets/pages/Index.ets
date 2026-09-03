@@ -8,14 +8,6 @@ import {
   hotspotStateLabel
 } from '../model/ClientState';
 
-const PAGE_BACKGROUND: string = '#F7F8FC';
-const CARD_BACKGROUND: string = '#FFFFFF';
-const PRIMARY_TEXT: string = '#1F2329';
-const SECONDARY_TEXT: string = '#737A87';
-const DIVIDER_COLOR: string = '#E9ECF2';
-const ACCENT_COLOR: string = '#356AE6';
-const ERROR_COLOR: string = '#D14343';
-
 @Entry
 @Component
 struct Index {
@@ -38,215 +30,224 @@ struct Index {
   }
 
   build(): void {
-    Scroll() {
-      Column({ space: 24 }) {
-        this.header();
-        this.preferenceCard();
-        this.devicesSection();
-        this.connectionSection();
-        this.controlsSection();
-        if (this.snapshot.lastError.length > 0) {
-          this.errorCard();
-        }
-        this.footer();
+    List({ space: 12 }) {
+      ListItem() {
+        this.titleBar();
       }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 32 });
-    }
-    .scrollable(ScrollDirection.Vertical)
-    .width('100%')
-    .height('100%')
-    .backgroundColor(PAGE_BACKGROUND);
-  }
+      .padding({ top: 12, bottom: 4 });
 
-  @Builder
-  header(): void {
-    Row({ space: 12 }) {
-      Column({ space: 4 }) {
-        Text('BlueHotspot')
-          .fontSize(30)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(PRIMARY_TEXT)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis });
-        Text('Control an Android hotspot over BLE')
-          .fontSize(14)
-          .fontColor(SECONDARY_TEXT)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis });
+      ListItem() {
+        this.preferenceRow();
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1);
 
-      Button('About')
-        .height(40)
-        .padding({ left: 16, right: 16 })
-        .fontSize(15)
-        .fontColor(ACCENT_COLOR)
-        .backgroundColor('#E9F0FF')
-        .borderRadius(20)
-        .onClick((): void => {
-          this.showAbout();
-        });
-    }
-    .width('100%')
-    .alignItems(VerticalAlign.Center);
-  }
-
-  @Builder
-  preferenceCard(): void {
-    Column() {
-      Row() {
-        Column({ space: 3 }) {
-          Text('Automatic connection')
-            .fontSize(16)
-            .fontColor(PRIMARY_TEXT);
-          Text('Reconnect to the last selected device')
-            .fontSize(13)
-            .fontColor(SECONDARY_TEXT);
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1);
-
-        Toggle({ type: ToggleType.Switch, isOn: this.snapshot.autoConnectEnabled })
-          .selectedColor(ACCENT_COLOR)
-          .onChange((isOn: boolean): void => {
-            this.store.setAutoConnectEnabled(isOn);
-          });
+      ListItem() {
+        this.sectionHeader('Android devices', `${this.snapshot.devices.length}`);
       }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 14, bottom: 14 });
-    }
-    .width('100%')
-    .backgroundColor(CARD_BACKGROUND)
-    .borderRadius(16)
-    .clip(true);
-  }
+      .padding({ top: 8, bottom: 2 });
 
-  @Builder
-  devicesSection(): void {
-    Column({ space: 10 }) {
-      this.sectionHeader('Android devices', `${this.snapshot.devices.length}`);
-      Column() {
+      ListItemGroup({ style: ListItemGroupStyle.CARD }) {
         if (this.snapshot.devices.length === 0) {
-          this.infoRow('⌕', 'No Android devices found', 'Start a scan to find nearby servers');
+          ListItem() {
+            this.emptyDeviceRow();
+          }
         } else {
-          ForEach(this.snapshot.devices, (device: DiscoveredDevice, index: number): void => {
-            this.deviceRow(device);
-            if (index < this.snapshot.devices.length - 1) {
-              Divider()
-                .color(DIVIDER_COLOR)
-                .margin({ left: 52, right: 16 });
+          ForEach(this.snapshot.devices, (device: DiscoveredDevice): void => {
+            ListItem() {
+              this.deviceRow(device);
             }
+            .enabled(this.snapshot.connectionState === ConnectionState.Scanning ||
+              this.snapshot.connectionState === ConnectionState.Disconnected)
+            .onClick((): void => {
+              this.store.connect(device);
+            });
           }, (device: DiscoveredDevice): string => device.id);
         }
 
-        Divider()
-          .color(DIVIDER_COLOR)
-          .margin({ left: 16, right: 16 });
-        this.actionRow(
-          '↻',
-          'Scan again',
-          'Search for nearby Android devices',
-          this.snapshot.bluetoothState === BluetoothState.Ready,
-          (): void => {
-            this.store.startScanning();
-          }
-        );
+        ListItem() {
+          this.actionRow('Scan again', this.snapshot.bluetoothState === BluetoothState.Ready);
+        }
+        .enabled(this.snapshot.bluetoothState === BluetoothState.Ready)
+        .onClick((): void => {
+          this.store.startScanning();
+        });
       }
-      .width('100%')
-      .backgroundColor(CARD_BACKGROUND)
-      .borderRadius(16)
-      .clip(true);
+      .divider({ strokeWidth: 1, startMargin: 16, endMargin: 16 });
+
+      ListItem() {
+        this.sectionHeader('Connection', '');
+      }
+      .padding({ top: 8, bottom: 2 });
+
+      ListItemGroup({ style: ListItemGroupStyle.CARD }) {
+        ListItem() {
+          this.connectionRow();
+        }
+        ListItem() {
+          this.statusRow('Bluetooth', this.bluetoothLabel());
+        }
+        ListItem() {
+          this.statusRow('Hotspot', hotspotStateLabel(this.snapshot.hotspotState));
+        }
+      }
+      .divider({ strokeWidth: 1, startMargin: 16, endMargin: 16 });
+
+      ListItem() {
+        this.sectionHeader('Controls', '');
+      }
+      .padding({ top: 8, bottom: 2 });
+
+      ListItemGroup({ style: ListItemGroupStyle.CARD }) {
+        if (this.snapshot.connectionState === ConnectionState.Connected) {
+          ListItem() {
+            this.actionRow('Start hotspot', this.snapshot.hotspotState !== 'STARTING' &&
+              this.snapshot.hotspotState !== 'ACTIVE');
+          }
+          .enabled(this.snapshot.hotspotState !== 'STARTING' && this.snapshot.hotspotState !== 'ACTIVE')
+          .onClick((): void => {
+            this.store.startHotspot();
+          });
+
+          ListItem() {
+            this.actionRow('Stop hotspot', this.snapshot.hotspotState === 'ACTIVE');
+          }
+          .enabled(this.snapshot.hotspotState === 'ACTIVE')
+          .onClick((): void => {
+            this.store.stopHotspot();
+          });
+
+          ListItem() {
+            this.actionRow('Disconnect', true);
+          }
+          .onClick((): void => {
+            this.store.disconnect();
+          });
+        } else {
+          ListItem() {
+            this.actionRow('Scan for Android device', this.snapshot.bluetoothState === BluetoothState.Ready);
+          }
+          .enabled(this.snapshot.bluetoothState === BluetoothState.Ready)
+          .onClick((): void => {
+            this.store.startScanning();
+          });
+        }
+      }
+      .divider({ strokeWidth: 1, startMargin: 16, endMargin: 16 });
+
+      if (this.snapshot.lastError.length > 0) {
+        ListItem() {
+          Text(this.snapshot.lastError)
+            .fontSize(14)
+            .fontColor(Color.Red)
+            .width('100%');
+        }
+        .padding({ top: 8, bottom: 16 });
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 16, right: 16 });
+  }
+
+  @Builder
+  titleBar(): void {
+    Row() {
+      Text('BlueHotspot')
+        .fontSize(32)
+        .fontWeight(FontWeight.Bold)
+        .layoutWeight(1);
+      Button('About')
+        .onClick((): void => {
+          this.showAbout();
+        });
     }
     .width('100%');
   }
 
   @Builder
-  deviceRow(device: DiscoveredDevice): void {
-    Row({ space: 12 }) {
-      Text('◉')
-        .fontSize(24)
-        .fontColor(ACCENT_COLOR)
-        .width(24)
-        .textAlign(TextAlign.Center);
+  preferenceRow(): void {
+    Row() {
+      Text('Automatic connection')
+        .fontSize(16)
+        .layoutWeight(1);
+      Toggle({ type: ToggleType.Switch, isOn: this.snapshot.autoConnectEnabled })
+        .onChange((isOn: boolean): void => {
+          this.store.setAutoConnectEnabled(isOn);
+        });
+    }
+    .width('100%');
+  }
 
+  @Builder
+  sectionHeader(title: string, count: string): void {
+    Row() {
+      Text(title)
+        .fontSize(21)
+        .fontWeight(FontWeight.Medium);
+      if (count.length > 0) {
+        Text(count)
+          .fontSize(15)
+          .fontColor(Color.Gray)
+          .margin({ left: 8 });
+      }
+    }
+    .width('100%');
+  }
+
+  @Builder
+  emptyDeviceRow(): void {
+    Text('No Android devices found')
+      .fontSize(16)
+      .fontColor(Color.Gray)
+      .width('100%');
+  }
+
+  @Builder
+  deviceRow(device: DiscoveredDevice): void {
+    Row() {
       Column({ space: 3 }) {
         Text(device.name)
           .fontSize(16)
-          .fontColor(PRIMARY_TEXT)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis });
+          .fontWeight(FontWeight.Medium);
         Text(device.rssi === 0 ? 'Signal unavailable' : `${device.rssi} dBm`)
-          .fontSize(13)
-          .fontColor(SECONDARY_TEXT);
+          .fontSize(14)
+          .fontColor(Color.Gray);
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1);
 
       if (this.snapshot.connectionState === ConnectionState.Connecting &&
         this.snapshot.deviceName === device.name) {
-        Text('Connecting')
-          .fontSize(14)
-          .fontColor(SECONDARY_TEXT);
+        LoadingProgress()
+          .width(24)
+          .height(24);
       } else if (this.snapshot.connectionState === ConnectionState.Connected &&
         this.snapshot.deviceName === device.name) {
         Text('Connected')
           .fontSize(14)
-          .fontColor(ACCENT_COLOR);
+          .fontColor(Color.Green);
       } else {
         Text('›')
-          .fontSize(28)
-          .fontColor(SECONDARY_TEXT);
+          .fontSize(24)
+          .fontColor(Color.Gray);
       }
     }
     .width('100%')
-    .padding({ left: 16, right: 12, top: 14, bottom: 14 })
-    .enabled(this.snapshot.connectionState === ConnectionState.Scanning ||
-      this.snapshot.connectionState === ConnectionState.Disconnected)
-    .onClick((): void => {
-      this.store.connect(device);
-    });
+    .padding(16);
   }
 
   @Builder
-  connectionSection(): void {
-    Column({ space: 10 }) {
-      this.sectionHeader('Connection', '');
-      Column() {
-        Row({ space: 12 }) {
-          Text(this.snapshot.connectionState === ConnectionState.Connected ? '●' : '○')
-            .fontSize(24)
-            .fontColor(this.snapshot.connectionState === ConnectionState.Connected ? ACCENT_COLOR : SECONDARY_TEXT)
-            .width(24)
-            .textAlign(TextAlign.Center);
-          Column({ space: 3 }) {
-            Text(this.snapshot.deviceName.length > 0 ? this.snapshot.deviceName : 'No Android device')
-              .fontSize(16)
-              .fontColor(PRIMARY_TEXT)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis });
-            Text(connectionStateLabel(this.snapshot.connectionState))
-              .fontSize(13)
-              .fontColor(SECONDARY_TEXT);
-          }
-          .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1);
-        }
-        .width('100%')
-        .padding({ left: 16, right: 16, top: 14, bottom: 14 });
-
-        Divider().color(DIVIDER_COLOR).margin({ left: 16, right: 16 });
-        this.statusRow('Bluetooth', this.bluetoothLabel());
-        Divider().color(DIVIDER_COLOR).margin({ left: 16, right: 16 });
-        this.statusRow('Hotspot', hotspotStateLabel(this.snapshot.hotspotState));
-      }
-      .width('100%')
-      .backgroundColor(CARD_BACKGROUND)
-      .borderRadius(16)
-      .clip(true);
+  connectionRow(): void {
+    Row() {
+      Text(this.snapshot.connectionState === ConnectionState.Connected ? 'Connected' : 'Not connected')
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .layoutWeight(1);
+      Text(connectionStateLabel(this.snapshot.connectionState))
+        .fontSize(14)
+        .fontColor(Color.Gray);
     }
-    .width('100%');
+    .width('100%')
+    .padding(16);
   }
 
   @Builder
@@ -254,175 +255,28 @@ struct Index {
     Row() {
       Text(title)
         .fontSize(16)
-        .fontColor(PRIMARY_TEXT)
         .layoutWeight(1);
       Text(value)
-        .fontSize(15)
-        .fontColor(SECONDARY_TEXT)
-        .textAlign(TextAlign.End)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis });
+        .fontSize(16)
+        .fontColor(Color.Gray);
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 13, bottom: 13 });
+    .padding(16);
   }
 
   @Builder
-  controlsSection(): void {
-    Column({ space: 10 }) {
-      this.sectionHeader('Controls', '');
-      Column() {
-        if (this.snapshot.connectionState === ConnectionState.Connected) {
-          this.actionRow(
-            '▶',
-            'Start hotspot',
-            'Start the Android device hotspot',
-            this.snapshot.hotspotState !== 'STARTING' && this.snapshot.hotspotState !== 'ACTIVE',
-            (): void => {
-              this.store.startHotspot();
-            }
-          );
-          Divider().color(DIVIDER_COLOR).margin({ left: 52, right: 16 });
-          this.actionRow(
-            '■',
-            'Stop hotspot',
-            'Stop the Android device hotspot',
-            this.snapshot.hotspotState === 'ACTIVE',
-            (): void => {
-              this.store.stopHotspot();
-            }
-          );
-          Divider().color(DIVIDER_COLOR).margin({ left: 52, right: 16 });
-          this.actionRow(
-            '×',
-            'Disconnect',
-            'Close the current BLE connection',
-            true,
-            (): void => {
-              this.store.disconnect();
-            }
-          );
-        } else {
-          this.actionRow(
-            '⌕',
-            'Scan for Android device',
-            'Find a BlueHotspot Android server',
-            this.snapshot.bluetoothState === BluetoothState.Ready,
-            (): void => {
-              this.store.startScanning();
-            }
-          );
-        }
-      }
-      .width('100%')
-      .backgroundColor(CARD_BACKGROUND)
-      .borderRadius(16)
-      .clip(true);
-    }
-    .width('100%');
-  }
-
-  @Builder
-  actionRow(icon: string, title: string, subtitle: string, enabled: boolean, action: () => void): void {
-    Row({ space: 12 }) {
-      Text(icon)
-        .fontSize(23)
-        .fontColor(enabled ? ACCENT_COLOR : SECONDARY_TEXT)
-        .width(24)
-        .textAlign(TextAlign.Center);
-      Column({ space: 3 }) {
-        Text(title)
-          .fontSize(16)
-          .fontColor(enabled ? PRIMARY_TEXT : SECONDARY_TEXT);
-        Text(subtitle)
-          .fontSize(13)
-          .fontColor(SECONDARY_TEXT)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis });
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1);
-      Text('›')
-        .fontSize(28)
-        .fontColor(enabled ? SECONDARY_TEXT : DIVIDER_COLOR);
-    }
-    .width('100%')
-    .padding({ left: 16, right: 12, top: 14, bottom: 14 })
-    .enabled(enabled)
-    .onClick((): void => {
-      action();
-    });
-  }
-
-  @Builder
-  infoRow(icon: string, title: string, subtitle: string): void {
-    Row({ space: 12 }) {
-      Text(icon)
-        .fontSize(26)
-        .fontColor(SECONDARY_TEXT)
-        .width(24)
-        .textAlign(TextAlign.Center);
-      Column({ space: 3 }) {
-        Text(title)
-          .fontSize(16)
-          .fontColor(PRIMARY_TEXT);
-        Text(subtitle)
-          .fontSize(13)
-          .fontColor(SECONDARY_TEXT);
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1);
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 18, bottom: 18 });
-  }
-
-  @Builder
-  sectionHeader(title: string, count: string): void {
-    Row({ space: 8 }) {
+  actionRow(title: string, enabled: boolean): void {
+    Row() {
       Text(title)
-        .fontSize(21)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(PRIMARY_TEXT);
-      if (count.length > 0) {
-        Text(count)
-          .fontSize(15)
-          .fontColor(SECONDARY_TEXT);
-      }
-    }
-    .width('100%');
-  }
-
-  @Builder
-  errorCard(): void {
-    Row({ space: 12 }) {
-      Text('!')
-        .fontSize(17)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(ERROR_COLOR)
-        .width(28)
-        .height(28)
-        .textAlign(TextAlign.Center)
-        .border({ width: 2, color: ERROR_COLOR, radius: 14 });
-      Text(this.snapshot.lastError)
-        .fontSize(14)
-        .fontColor(ERROR_COLOR)
+        .fontSize(16)
+        .fontColor(enabled ? Color.Blue : Color.Gray)
         .layoutWeight(1);
+      Text('›')
+        .fontSize(24)
+        .fontColor(Color.Gray);
     }
     .width('100%')
-    .padding(16)
-    .backgroundColor('#FFF1F1')
-    .borderRadius(16);
-  }
-
-  @Builder
-  footer(): void {
-    Text('BlueHotspot HarmonyOS client')
-      .width('100%')
-      .fontSize(12)
-      .fontColor('#9AA1AD')
-      .textAlign(TextAlign.Center)
-      .margin({ top: 2 });
+    .padding(16);
   }
 
   private bluetoothLabel(): string {
@@ -438,8 +292,8 @@ struct Index {
 
   private showAbout(): void {
     this.getUIContext().showAlertDialog({
-      title: 'BlueHotspot HarmonyOS client',
-      message: 'Controls an existing BlueHotspot Android server over BLE. No hotspot credentials are read, stored, or transferred.',
+      title: 'About BlueHotspot',
+      message: 'BlueHotspot lets this HarmonyOS device control an Android device\'s already-configured Wi-Fi hotspot over encrypted Bluetooth Low Energy (BLE).',
       primaryButton: {
         value: 'Close',
         action: (): void => {}
