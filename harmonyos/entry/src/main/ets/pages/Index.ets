@@ -1,3 +1,4 @@
+import { Theme } from '@kit.ArkUI';
 import { ClientStore } from '../store/ClientStore';
 import {
   BluetoothState,
@@ -13,6 +14,17 @@ import {
 struct Index {
   private readonly store: ClientStore = new ClientStore();
   @State private snapshot: ClientSnapshot = this.store.state;
+  @State private pageBackground: ResourceColor = Color.Transparent;
+  @State private secondaryFontColor: ResourceColor = Color.Gray;
+  @State private emphasizeFontColor: ResourceColor = Color.Blue;
+  @State private alertColor: ResourceColor = Color.Red;
+
+  onWillApplyTheme(theme: Theme): void {
+    this.pageBackground = theme.colors.backgroundSecondary;
+    this.secondaryFontColor = theme.colors.fontSecondary;
+    this.emphasizeFontColor = theme.colors.fontEmphasize;
+    this.alertColor = theme.colors.alert;
+  }
 
   aboutToAppear(): void {
     this.store.subscribe((next: ClientSnapshot): void => {
@@ -137,7 +149,7 @@ struct Index {
         ListItem() {
           Text(this.snapshot.lastError)
             .fontSize(14)
-            .fontColor(Color.Red)
+            .fontColor(this.alertColor)
             .width('100%');
         }
         .padding({ top: 8, bottom: 16 });
@@ -145,7 +157,8 @@ struct Index {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 16, right: 16 });
+    .padding({ left: 16, right: 16 })
+    .backgroundColor(this.pageBackground);
   }
 
   @Builder
@@ -186,7 +199,7 @@ struct Index {
       if (count.length > 0) {
         Text(count)
           .fontSize(15)
-          .fontColor(Color.Gray)
+          .fontColor(this.secondaryFontColor)
           .margin({ left: 8 });
       }
     }
@@ -197,7 +210,7 @@ struct Index {
   emptyDeviceRow(): void {
     Text('No Android devices found')
       .fontSize(16)
-      .fontColor(Color.Gray)
+      .fontColor(this.secondaryFontColor)
       .width('100%');
   }
 
@@ -210,7 +223,7 @@ struct Index {
           .fontWeight(FontWeight.Medium);
         Text(device.rssi === 0 ? 'Signal unavailable' : `${device.rssi} dBm`)
           .fontSize(14)
-          .fontColor(Color.Gray);
+          .fontColor(this.secondaryFontColor);
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1);
@@ -224,11 +237,11 @@ struct Index {
         this.snapshot.deviceName === device.name) {
         Text('Connected')
           .fontSize(14)
-          .fontColor(Color.Green);
+          .fontColor(this.emphasizeFontColor);
       } else {
         Text('›')
           .fontSize(24)
-          .fontColor(Color.Gray);
+          .fontColor(this.secondaryFontColor);
       }
     }
     .width('100%')
@@ -244,7 +257,7 @@ struct Index {
         .layoutWeight(1);
       Text(connectionStateLabel(this.snapshot.connectionState))
         .fontSize(14)
-        .fontColor(Color.Gray);
+        .fontColor(this.secondaryFontColor);
     }
     .width('100%')
     .padding(16);
@@ -258,7 +271,7 @@ struct Index {
         .layoutWeight(1);
       Text(value)
         .fontSize(16)
-        .fontColor(Color.Gray);
+        .fontColor(this.secondaryFontColor);
     }
     .width('100%')
     .padding(16);
@@ -269,11 +282,11 @@ struct Index {
     Row() {
       Text(title)
         .fontSize(16)
-        .fontColor(enabled ? Color.Blue : Color.Gray)
+        .fontColor(enabled ? this.emphasizeFontColor : this.secondaryFontColor)
         .layoutWeight(1);
       Text('›')
         .fontSize(24)
-        .fontColor(Color.Gray);
+        .fontColor(this.secondaryFontColor);
     }
     .width('100%')
     .padding(16);
