@@ -61,11 +61,12 @@ jobs:
 
           mkdir -p "$extract"
           unzip -q "$archive" -d "$extract"
-          tools_root="$(find "$extract" -type f -name hvigorw -printf '%h\n' | head -n 1)"
-          if [[ -z "$tools_root" ]]; then
+          hvigorw_path="$(find "$extract" -type f -path '*/bin/hvigorw' -print -quit)"
+          if [[ -z "$hvigorw_path" ]]; then
             echo "Could not find Command Line Tools root containing bin/hvigorw." >&2
             exit 1
           fi
+          tools_root="$(dirname "$(dirname "$hvigorw_path")")"
 
           chmod +x "$tools_root/bin/hvigorw" "$tools_root/bin/ohpm"
           echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
