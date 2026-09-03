@@ -158,7 +158,8 @@ struct Index {
     .width('100%')
     .height('100%')
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.pageBackground);
+    .backgroundColor(this.pageBackground)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM]);
   }
 
   @Builder
