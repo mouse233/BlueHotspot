@@ -98,12 +98,32 @@ jobs:
             fi
           fi
 
-          tools_root="$(dirname "$(dirname "$hvigorw_path")")"
-          chmod +x "$tools_root/bin/hvigorw" "$tools_root/bin/ohpm"
+          ohpm_path="$(find "$cache_root" -type f -path '*/bin/ohpm' -print -quit)"
+          if [[ -z "$ohpm_path" ]]; then
+            echo "Could not find ohpm in the downloaded Command Line Tools." >&2
+            exit 1
+          fi
+
+          tools_root="$(dirname "$hvigorw_path")"
+          while [[ "$tools_root" != "$cache_root" && "$tools_root" != "/" ]]; do
+            if [[ -d "$tools_root/sdk" ]]; then
+              break
+            fi
+            tools_root="$(dirname "$tools_root")"
+          done
+          if [[ ! -d "$tools_root/sdk" ]]; then
+            echo "Could not find the SDK directory beside the Command Line Tools." >&2
+            exit 1
+          fi
+
+          chmod +x "$hvigorw_path" "$ohpm_path"
           echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
+          echo "HARMONY_HVIGORW=$hvigorw_path" >> "$GITHUB_ENV"
+          echo "HARMONY_OHPM=$ohpm_path" >> "$GITHUB_ENV"
           echo "DEVECO_SDK_HOME=$tools_root/sdk" >> "$GITHUB_ENV"
           echo "OHOS_SDK_HOME=$tools_root/sdk/default/openharmony" >> "$GITHUB_ENV"
-          echo "$tools_root/bin" >> "$GITHUB_PATH"
+          echo "$(dirname "$hvigorw_path")" >> "$GITHUB_PATH"
+          echo "$(dirname "$ohpm_path")" >> "$GITHUB_PATH"
 
       - name: Save HarmonyOS Command Line Tools cache
         if: ${{ always() && steps.harmony-tools-cache.outputs.cache-hit != 'true' }}
@@ -116,13 +136,13 @@ jobs:
         working-directory: harmonyos
         run: |
           set -euo pipefail
-          "$HARMONY_TOOLS_ROOT/bin/ohpm" install
+          "$HARMONY_OHPM" install
 
       - name: Build unsigned HAP and APP
         working-directory: harmonyos
         run: |
           set -euo pipefail
-          "$HARMONY_TOOLS_ROOT/bin/hvigorw" \
+          "$HARMONY_HVIGORW" \
             --mode project \
             -p product=default \
             -p buildMode=debug \
