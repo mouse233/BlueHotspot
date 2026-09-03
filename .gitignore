@@ -20,6 +20,15 @@ ios/**/*.xcuserstate
 ios/*.xcworkspace/xcuserdata/
 ios/**/*.xcodeproj/xcuserdata/
 
+# HarmonyOS / DevEco
+harmonyos/.hvigor/
+harmonyos/.idea/
+harmonyos/oh_modules/
+harmonyos/**/build/
+harmonyos/**/.cxx/
+harmonyos/.appanalyzer/
+harmonyos/**/.test/
+
 # OS files
 .DS_Store
 Thumbs.db
