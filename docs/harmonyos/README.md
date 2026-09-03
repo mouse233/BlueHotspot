@@ -42,3 +42,13 @@ installed compatible SDK and signing configuration. The checked-in project
 contains the standard Hvigor configuration; the wrapper executable is supplied
 by the DevEco installation. A local debug HAP can be built with the discovered
 `assembleApp` task. Signing is intentionally not configured in this repository.
+
+## GitHub Actions CI
+
+The repository includes `.github/workflows/harmonyos.yml`, which uses the
+standard `ubuntu-latest` GitHub-hosted runner. GitHub's runner image does not
+include Huawei's HarmonyOS toolchain, so configure the repository variable
+`HARMONY_COMMAND_LINE_TOOLS_URL` with a direct URL to the Linux Command Line
+Tools ZIP. Optionally set `HARMONY_COMMAND_LINE_TOOLS_SHA256` to verify the
+download. The workflow then installs `ohpm` dependencies, runs `assembleApp`,
+and uploads the unsigned HAP and APP outputs.

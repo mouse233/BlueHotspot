@@ -1,0 +1,117 @@
+name: HarmonyOS CI
+
+on:
+  push:
+    paths:
+      - "harmonyos/**"
+      - ".github/workflows/harmonyos.yml"
+  pull_request:
+    paths:
+      - "harmonyos/**"
+      - ".github/workflows/harmonyos.yml"
+  workflow_dispatch:
+    inputs:
+      command_line_tools_url:
+        description: "Direct URL to the Huawei HarmonyOS Command Line Tools ZIP"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  harmonyos:
+    name: Build HarmonyOS app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Download HarmonyOS Command Line Tools
+        env:
+          TOOLS_URL: ${{ inputs.command_line_tools_url || vars.HARMONY_COMMAND_LINE_TOOLS_URL }}
+          TOOLS_SHA256: ${{ vars.HARMONY_COMMAND_LINE_TOOLS_SHA256 }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${TOOLS_URL//[[:space:]]/}" ]]; then
+            echo "HARMONY_COMMAND_LINE_TOOLS_URL is not configured." >&2
+            echo "Set a repository variable with a direct Huawei Linux Command Line Tools ZIP URL," >&2
+            echo "or provide command_line_tools_url when starting workflow_dispatch." >&2
+            echo "The URL must point to the Linux package containing bin/hvigorw." >&2
+            exit 1
+          fi
+
+          archive="$RUNNER_TEMP/harmony-command-line-tools.zip"
+          extract="$RUNNER_TEMP/harmony-command-line-tools"
+          curl --fail --location --retry 3 --retry-delay 2 "$TOOLS_URL" --output "$archive"
+
+          if [[ -n "${TOOLS_SHA256//[[:space:]]/}" ]]; then
+            expected="${TOOLS_SHA256,,}"
+            actual="$(sha256sum "$archive" | cut -d ' ' -f 1)"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "HarmonyOS Command Line Tools SHA-256 mismatch. Expected $expected, got $actual." >&2
+              exit 1
+            fi
+          fi
+
+          mkdir -p "$extract"
+          unzip -q "$archive" -d "$extract"
+          tools_root="$(find "$extract" -type f -name hvigorw -printf '%h\n' | head -n 1)"
+          if [[ -z "$tools_root" ]]; then
+            echo "Could not find Command Line Tools root containing bin/hvigorw." >&2
+            exit 1
+          fi
+
+          chmod +x "$tools_root/bin/hvigorw" "$tools_root/bin/ohpm"
+          echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
+          echo "$tools_root/bin" >> "$GITHUB_PATH"
+
+      - name: Install HarmonyOS dependencies
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          "$HARMONY_TOOLS_ROOT/bin/ohpm" install
+
+      - name: Build unsigned HAP and APP
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          "$HARMONY_TOOLS_ROOT/bin/hvigorw" \
+            --mode project \
+            -p product=default \
+            -p buildMode=debug \
+            assembleApp
+
+      - name: Verify build outputs
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          mapfile -t hap_files < <(find entry/build/default/outputs/default -maxdepth 1 -type f -name '*.hap')
+          mapfile -t app_files < <(find build/outputs/default -maxdepth 1 -type f -name '*.app')
+          if (( ${#hap_files[@]} == 0 || ${#app_files[@]} == 0 )); then
+            echo "Expected unsigned HAP and APP outputs were not produced." >&2
+            exit 1
+          fi
+          printf '%s\n' "${hap_files[@]}" "${app_files[@]}"
+
+      - name: Upload HarmonyOS artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: BlueHotspot-harmonyos-unsigned
+          path: |
+            harmonyos/entry/build/default/outputs/default/*.hap
+            harmonyos/build/outputs/default/*.app
+          if-no-files-found: error
