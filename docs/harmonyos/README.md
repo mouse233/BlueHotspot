@@ -52,5 +52,6 @@ Command Line Tools archive from the configured default URL. The URL can be
 overridden with the repository variable `HARMONY_COMMAND_LINE_TOOLS_URL` or
 the `command_line_tools_url` input when starting `workflow_dispatch`.
 Optionally set `HARMONY_COMMAND_LINE_TOOLS_SHA256` to verify the download. The
-workflow then installs `ohpm` dependencies, runs `assembleApp`, and uploads the
-unsigned HAP and APP outputs.
+workflow uses `aria2c` for a multi-connection first download and caches the
+extracted `6.0.1.251` toolchain for later runs. It then installs `ohpm`
+dependencies, runs `assembleApp`, and uploads the unsigned HAP and APP outputs.

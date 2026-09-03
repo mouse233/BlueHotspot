@@ -39,38 +39,76 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Download HarmonyOS Command Line Tools
+      - name: Restore HarmonyOS Command Line Tools cache
+        id: harmony-tools-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/bluehotspot/harmony-command-line-tools/6.0.1.251
+          key: harmonyos-command-line-tools-linux-x64-6.0.1.251
+
+      - name: Prepare HarmonyOS Command Line Tools
         env:
           TOOLS_URL: ${{ inputs.command_line_tools_url || vars.HARMONY_COMMAND_LINE_TOOLS_URL || 'https://huggingface.co/csukuangfj/harmonyos-commandline-tools/resolve/main/commandline-tools-linux-x64-6.0.1.251.zip' }}
           TOOLS_SHA256: ${{ vars.HARMONY_COMMAND_LINE_TOOLS_SHA256 }}
         run: |
           set -euo pipefail
 
-          archive="$RUNNER_TEMP/harmony-command-line-tools.zip"
-          extract="$RUNNER_TEMP/harmony-command-line-tools"
-          curl --fail --location --retry 3 --retry-delay 2 "$TOOLS_URL" --output "$archive"
+          cache_root="$HOME/.cache/bluehotspot/harmony-command-line-tools/6.0.1.251"
+          mkdir -p "$cache_root"
+          hvigorw_path="$(find "$cache_root" -type f -path '*/bin/hvigorw' -print -quit)"
 
-          if [[ -n "${TOOLS_SHA256//[[:space:]]/}" ]]; then
-            expected="${TOOLS_SHA256,,}"
-            actual="$(sha256sum "$archive" | cut -d ' ' -f 1)"
-            if [[ "$actual" != "$expected" ]]; then
-              echo "HarmonyOS Command Line Tools SHA-256 mismatch. Expected $expected, got $actual." >&2
+          if [[ -z "$hvigorw_path" ]]; then
+            if ! command -v aria2c >/dev/null 2>&1; then
+              sudo apt-get update -qq
+              sudo apt-get install -y -qq aria2
+            fi
+
+            archive="$RUNNER_TEMP/harmony-command-line-tools.zip"
+            aria2c \
+              --allow-overwrite=true \
+              --auto-file-renaming=false \
+              --continue=true \
+              --file-allocation=none \
+              --max-connection-per-server=16 \
+              --split=16 \
+              --min-split-size=1M \
+              --max-tries=5 \
+              --retry-wait=5 \
+              --timeout=60 \
+              --connect-timeout=30 \
+              --dir="$RUNNER_TEMP" \
+              --out="$(basename "$archive")" \
+              "$TOOLS_URL"
+
+            if [[ -n "${TOOLS_SHA256//[[:space:]]/}" ]]; then
+              expected="${TOOLS_SHA256//[[:space:]]/}"
+              expected="${expected,,}"
+              actual="$(sha256sum "$archive" | cut -d ' ' -f 1)"
+              if [[ "$actual" != "$expected" ]]; then
+                echo "HarmonyOS Command Line Tools SHA-256 mismatch. Expected $expected, got $actual." >&2
+                exit 1
+              fi
+            fi
+
+            unzip -q "$archive" -d "$cache_root"
+            hvigorw_path="$(find "$cache_root" -type f -path '*/bin/hvigorw' -print -quit)"
+            if [[ -z "$hvigorw_path" ]]; then
+              echo "Could not find Command Line Tools root containing bin/hvigorw." >&2
               exit 1
             fi
           fi
 
-          mkdir -p "$extract"
-          unzip -q "$archive" -d "$extract"
-          hvigorw_path="$(find "$extract" -type f -path '*/bin/hvigorw' -print -quit)"
-          if [[ -z "$hvigorw_path" ]]; then
-            echo "Could not find Command Line Tools root containing bin/hvigorw." >&2
-            exit 1
-          fi
           tools_root="$(dirname "$(dirname "$hvigorw_path")")"
-
           chmod +x "$tools_root/bin/hvigorw" "$tools_root/bin/ohpm"
           echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
           echo "$tools_root/bin" >> "$GITHUB_PATH"
+
+      - name: Save HarmonyOS Command Line Tools cache
+        if: ${{ always() && steps.harmony-tools-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/bluehotspot/harmony-command-line-tools/6.0.1.251
+          key: harmonyos-command-line-tools-linux-x64-6.0.1.251
 
       - name: Install HarmonyOS dependencies
         working-directory: harmonyos
