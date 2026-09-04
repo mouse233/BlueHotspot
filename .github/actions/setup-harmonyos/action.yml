@@ -1,0 +1,52 @@
+name: Set up HarmonyOS command line tools
+description: Download, verify, cache, and configure HarmonyOS command line tools for a GitHub Actions job.
+
+inputs:
+  version:
+    description: HarmonyOS command line tools version used for the cache namespace.
+    required: true
+  tools-url:
+    description: Direct URL to the HarmonyOS command line tools ZIP archive.
+    required: true
+  sha256:
+    description: SHA-256 digest of the command line tools ZIP archive.
+    required: true
+  cache-path:
+    description: Directory where extracted command line tools are cached.
+    default: ~/.cache/setup-harmonyos
+    required: false
+
+outputs:
+  tools-root:
+    description: Extracted command line tools root directory.
+    value: ${{ steps.prepare.outputs.tools-root }}
+  sdk-root:
+    description: Embedded HarmonyOS SDK root directory.
+    value: ${{ steps.prepare.outputs.sdk-root }}
+
+runs:
+  using: composite
+  steps:
+    - name: Restore HarmonyOS command line tools cache
+      id: cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ inputs.cache-path }}/${{ inputs.version }}
+        key: harmonyos-command-line-tools-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}-${{ inputs.sha256 }}
+
+    - name: Download and configure HarmonyOS command line tools
+      id: prepare
+      shell: bash
+      env:
+        HARMONY_CACHE_PATH: ${{ inputs.cache-path }}
+        HARMONY_TOOLS_URL: ${{ inputs.tools-url }}
+        HARMONY_TOOLS_SHA256: ${{ inputs.sha256 }}
+        HARMONY_TOOLS_VERSION: ${{ inputs.version }}
+      run: bash "$GITHUB_ACTION_PATH/setup.sh"
+
+    - name: Save HarmonyOS command line tools cache
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ inputs.cache-path }}/${{ inputs.version }}
+        key: harmonyos-command-line-tools-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}-${{ inputs.sha256 }}

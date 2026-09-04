@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "harmonyos/**"
+      - ".github/actions/setup-harmonyos/**"
       - ".github/workflows/harmonyos.yml"
   pull_request:
     paths:
       - "harmonyos/**"
+      - ".github/actions/setup-harmonyos/**"
       - ".github/workflows/harmonyos.yml"
   workflow_dispatch:
     inputs:
@@ -21,6 +23,10 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: harmonyos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   harmonyos:
@@ -39,97 +45,12 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Restore HarmonyOS Command Line Tools cache
-        id: harmony-tools-cache
-        uses: actions/cache@v6
+      - name: Set up HarmonyOS command line tools
+        uses: ./.github/actions/setup-harmonyos
         with:
-          path: ~/.cache/bluehotspot/harmony-command-line-tools/6.1.1.280
-          key: harmonyos-command-line-tools-linux-x64-6.1.1.280
-
-      - name: Prepare HarmonyOS Command Line Tools
-        env:
-          TOOLS_URL: ${{ inputs.command_line_tools_url || 'https://huggingface.co/buckets/mouse233/harmonyos-commandline-tools-bucket/resolve/commandline-tools-linux-x64-6.1.1.280.zip?download=true' }}
-          TOOLS_SHA256: ${{ vars.HARMONY_COMMAND_LINE_TOOLS_SHA256 }}
-        run: |
-          set -euo pipefail
-
-          cache_root="$HOME/.cache/bluehotspot/harmony-command-line-tools/6.1.1.280"
-          mkdir -p "$cache_root"
-          hvigorw_path="$(find "$cache_root" -type f -path '*/bin/hvigorw' -print -quit)"
-
-          if [[ -z "$hvigorw_path" ]]; then
-            if ! command -v aria2c >/dev/null 2>&1; then
-              sudo apt-get update -qq
-              sudo apt-get install -y -qq aria2
-            fi
-
-            archive="$RUNNER_TEMP/harmony-command-line-tools.zip"
-            aria2c \
-              --allow-overwrite=true \
-              --auto-file-renaming=false \
-              --continue=true \
-              --file-allocation=none \
-              --max-connection-per-server=16 \
-              --split=16 \
-              --min-split-size=1M \
-              --max-tries=5 \
-              --retry-wait=5 \
-              --timeout=60 \
-              --connect-timeout=30 \
-              --dir="$RUNNER_TEMP" \
-              --out="$(basename "$archive")" \
-              "$TOOLS_URL"
-
-            if [[ -n "${TOOLS_SHA256//[[:space:]]/}" ]]; then
-              expected="${TOOLS_SHA256//[[:space:]]/}"
-              expected="${expected,,}"
-              actual="$(sha256sum "$archive" | cut -d ' ' -f 1)"
-              if [[ "$actual" != "$expected" ]]; then
-                echo "HarmonyOS Command Line Tools SHA-256 mismatch. Expected $expected, got $actual." >&2
-                exit 1
-              fi
-            fi
-
-            unzip -q "$archive" -d "$cache_root"
-            hvigorw_path="$(find "$cache_root" -type f -path '*/bin/hvigorw' -print -quit)"
-            if [[ -z "$hvigorw_path" ]]; then
-              echo "Could not find Command Line Tools root containing bin/hvigorw." >&2
-              exit 1
-            fi
-          fi
-
-          ohpm_path="$(find "$cache_root" -type f -path '*/bin/ohpm' -print -quit)"
-          if [[ -z "$ohpm_path" ]]; then
-            echo "Could not find ohpm in the downloaded Command Line Tools." >&2
-            exit 1
-          fi
-
-          tools_root="$(dirname "$hvigorw_path")"
-          while [[ "$tools_root" != "$cache_root" && "$tools_root" != "/" ]]; do
-            if [[ -d "$tools_root/sdk" ]]; then
-              break
-            fi
-            tools_root="$(dirname "$tools_root")"
-          done
-          if [[ ! -d "$tools_root/sdk" ]]; then
-            echo "Could not find the SDK directory beside the Command Line Tools." >&2
-            exit 1
-          fi
-
-          chmod +x "$hvigorw_path" "$ohpm_path"
-          echo "HARMONY_TOOLS_ROOT=$tools_root" >> "$GITHUB_ENV"
-          echo "HARMONY_HVIGORW=$hvigorw_path" >> "$GITHUB_ENV"
-          echo "HARMONY_OHPM=$ohpm_path" >> "$GITHUB_ENV"
-          echo "DEVECO_SDK_HOME=$tools_root/sdk" >> "$GITHUB_ENV"
-          echo "$(dirname "$hvigorw_path")" >> "$GITHUB_PATH"
-          echo "$(dirname "$ohpm_path")" >> "$GITHUB_PATH"
-
-      - name: Save HarmonyOS Command Line Tools cache
-        if: ${{ always() && steps.harmony-tools-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        with:
-          path: ~/.cache/bluehotspot/harmony-command-line-tools/6.1.1.280
-          key: harmonyos-command-line-tools-linux-x64-6.1.1.280
+          version: 6.1.1.280
+          tools-url: ${{ inputs.command_line_tools_url || 'https://huggingface.co/buckets/mouse233/harmonyos-commandline-tools-bucket/resolve/commandline-tools-linux-x64-6.1.1.280.zip?download=true' }}
+          sha256: f7ca54dd9b75b887865d8857621f0fb78f377f5a74181bc4ff40612c984c693a
 
       - name: Install HarmonyOS dependencies
         working-directory: harmonyos
@@ -146,6 +67,12 @@ jobs:
             -p product=default \
             -p buildMode=debug \
             assembleApp
+
+      - name: Run HarmonyOS unit tests
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          "$HARMONY_HVIGORW" test -p module=entry -p coverage=true
 
       - name: Verify build outputs
         working-directory: harmonyos
