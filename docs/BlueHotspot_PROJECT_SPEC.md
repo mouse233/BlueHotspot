@@ -219,8 +219,9 @@ Use a single GitHub monorepo.
 bluehotspot/
 ├── android/
 ├── ios/
-├── protocol/
+├── harmonyos/
 ├── docs/
+│   └── protocol/
 ├── .github/
 │   └── workflows/
 ├── README.md
@@ -230,9 +231,10 @@ bluehotspot/
 
 Reason:
 
-- Android and iOS share one BLE protocol.
-- Protocol changes should update both clients in one PR.
-- Releases can contain Android and iOS artifacts together.
+- Android, iOS, and HarmonyOS clients share one BLE protocol.
+- Protocol changes should update all affected clients in one PR.
+- Releases can contain Android and iOS artifacts together; HarmonyOS remains
+  experimental until it has completed on-device validation.
 
 Do not initialize nested Git repositories inside `android/` or `ios/`.
 
@@ -1474,13 +1476,13 @@ Rules:
 Canonical protocol document:
 
 ```text
-protocol/PROTOCOL.md
+docs/protocol/PROTOCOL.md
 ```
 
 Canonical UUID document:
 
 ```text
-protocol/UUIDS.md
+docs/protocol/UUIDS.md
 ```
 
 ---
@@ -1559,7 +1561,7 @@ Both platforms should test:
 Put shared vectors in:
 
 ```text
-protocol/examples/
+docs/protocol/examples/
 ```
 
 ## 36.2 Android unit tests
@@ -2215,4 +2217,3 @@ The product is successful only when:
 > **The iPhone can actually browse the Internet through the Android device's remotely-started hotspot.**
 
 Build that path correctly before adding unrelated features.
-

@@ -1,5 +1,7 @@
 # BlueHotspot BLE Protocol v1
 
+This is the canonical cross-platform protocol specification.
+
 ## MVP scope
 
 The iPhone is the BLE central and Android is the BLE peripheral/GATT server.
