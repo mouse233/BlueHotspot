@@ -32,8 +32,8 @@ debug build.
 
 - `android/` — Android app and tethering control.
 - `ios/` — SwiftUI source and `project.yml` used by XcodeGen in CI.
-- `protocol/` — shared BLE protocol documents.
-- `docs/` — architecture and project documentation.
+- `docs/protocol/` — shared BLE protocol documents.
+- `docs/` — architecture, protocol, and project documentation.
 
 
 GitHub Actions workflows explicitly use the Node 24 runtime; do not reintroduce Node 20.

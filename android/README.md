@@ -38,9 +38,8 @@ Android Studio should use the Gradle Wrapper distribution configured in
 ## BLE control
 
 When the app has Bluetooth permissions and Bluetooth is enabled, it advertises
-the v1 encrypted GATT service defined in `../protocol/PROTOCOL.md`. The command
+the v1 encrypted GATT service defined in `../docs/protocol/PROTOCOL.md`. The command
  characteristic accepts only `HELLO`, `GET_STATUS`, `START_HOTSPOT`, `STOP_HOTSPOT`,
 and `PING`; it never accepts shell commands or hotspot credentials. Android's
 BLE link pairing/encryption is required before control characteristics can be
 used.
-

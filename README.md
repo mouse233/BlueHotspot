@@ -1,93 +1,122 @@
 # BlueHotspot
 
+BlueHotspot lets a controller device start, stop, and inspect the status of an
+Android device's already-configured Wi-Fi hotspot over encrypted Bluetooth Low
+Energy (BLE). It never reads, generates, stores, or transmits the hotspot SSID
+or passphrase.
 
-BlueHotspot is a native Android + iOS utility that lets an iPhone
-control an Android device's already-configured Wi-Fi hotspot over encrypted
-Bluetooth Low Energy (BLE). The Android server requires either a verified Shizuku session or ROOT access, selected explicitly in Permission settings.
-
+The Android server uses the permission method explicitly selected in its
+settings: a verified Shizuku session or a KernelSU-compatible ROOT-enabled
+device. It does not silently fall back from one method to the other.
 
 <a href="https://github.com/mouse233/BlueHotspot/releases/latest"><img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/main/get-it-on-github.png" alt="Get it on GitHub" height="60"></a>
 
-The project is split into a hotspot server and controller clients.
+## Components and status
 
-- Android server — runs on Android and controls the configured hotspot.
-- iOS client — controls an Android server over BLE.
-- Android client — controls an Android server over BLE.
-- HarmonyOS NEXT client — controls an Android server over BLE.
+| Component | Role | Status |
+| --- | --- | --- |
+| Android server | Controls the Android system hotspot and exposes the BLE GATT service. | Implemented |
+| Android client | Controls an Android server over BLE. | Implemented |
+| iOS client | Controls an Android server over BLE. | Implemented; CI produces an unsigned IPA |
+| HarmonyOS NEXT client | Native ArkTS/ArkUI BLE controller. | **Experimental**; CI builds it, but on-device BLE testing is pending |
 
 ## Requirements
 
 ### Android server
 
 - Android 16 (API 36) or newer.
-- A Shizuku v13+ session through wireless debugging, or a KernelSU-compatible ROOT-enabled Android device, depending on the selected permission method.
-- Bluetooth permissions and an enabled Bluetooth adapter.
-- The Android app must remain installed and its BLE foreground service must be
-  allowed to run.
+- Bluetooth permission and an enabled Bluetooth adapter.
+- A Shizuku v13+ session through wireless debugging, or a KernelSU-compatible
+  ROOT-enabled device, depending on the permission method selected in the app.
+- Permission for the BLE foreground service to keep running.
 
-### Android client
+The `TetheringManager` route requires API 36+ and may require a privileged or
+system install. Declaring `TETHER_PRIVILEGED` does not grant it to a normal APK.
+Shizuku support also depends on the device ROM granting the shell user that
+permission.
 
-- Android 16 (API 36) or newer.
-- Bluetooth permissions and an enabled Bluetooth adapter.
+### Controller clients
 
-### iOS client
+- **Android:** Android 16 (API 36)+ with Bluetooth enabled.
+- **iOS:** iOS 17+ with Bluetooth permission.
+- **HarmonyOS NEXT:** a BLE-capable HarmonyOS NEXT / OpenHarmony device, a
+  compatible DevEco Studio and SDK, and Bluetooth permission. This client is
+  experimental and has not yet received on-device BLE validation.
 
-- iOS 17 or newer.
-- Bluetooth permission.
+## What the protocol does
 
-### HarmonyOS NEXT client
+The controller discovers the Android server's encrypted GATT service, pairs at
+the system level, and sends a small set of versioned commands:
 
-- HarmonyOS NEXT / OpenHarmony phone or tablet with BLE support.
-- A current DevEco Studio and compatible HarmonyOS SDK.
-- Bluetooth permission.
+`HELLO`, `GET_STATUS`, `START_HOTSPOT`, `STOP_HOTSPOT`, and `PING`.
 
-## Version 1.1.0
+The Android server returns status, lifecycle events, and stable error names.
+BLE link encryption and bonding are the v1 authentication boundary. Full
+application-level identity management, trusted-peer revocation,
+challenge-response, and replay protection are deferred to a later iteration.
 
-This release adds explicit permission-method selection on the Android server. Users can choose Shizuku or Root, authorize the selected backend, and run a real availability check before controlling the already-configured hotspot. The app never silently switches to the other backend.
+The canonical protocol documents are:
 
-## Current status
+- [Protocol framing and commands](docs/protocol/PROTOCOL.md)
+- [GATT service and characteristic UUIDs](docs/protocol/UUIDS.md)
+- [Stable error codes](docs/protocol/ERROR_CODES.md)
 
-The MVP control loop is implemented across the Android server, Android client,
-and iOS client. Encrypted BLE is used to discover devices and start, stop, and
-report the status of the Android device's already-configured Wi-Fi hotspot. The
-MVP does not read, generate, transmit, or store the hotspot SSID or passphrase.
+## Build and CI
 
-## Build and test
+### Android
 
-Android can be validated on the development machine:
+The development machine is Windows. From `android/`, use the checked-in Gradle
+Wrapper:
 
 ```powershell
-cd android
 .\gradlew.bat test lint assembleDebug
 ```
 
-The iOS project is generated with XcodeGen and built by the macOS GitHub
-Actions workflow. It produces an unsigned `BlueHotspot-unsigned-ipa` artifact
-for compile/package validation. The artifact is not installable on a device
-until Apple signing certificates, provisioning profiles, and a separate
-signing workflow are configured.
+GitHub Actions runs Android lint, unit tests, and debug builds. It uploads
+`BlueHotspot-android-server-debug` and `BlueHotspot-android-client-debug`.
+For Android implementation and privileged-backend details, see
+[android/README.md](android/README.md).
+
+### iOS
+
+The iOS project is generated from `ios/project.yml` with XcodeGen and must be
+built on macOS. The `Build iOS IPA` workflow compiles and packages an unsigned
+`BlueHotspot-unsigned-ipa` artifact. It is a compile/package check only: it
+cannot be installed until Apple signing certificates, provisioning profiles,
+and a signing workflow are configured. See [ios/README.md](ios/README.md).
+
+### HarmonyOS NEXT
+
+Open `harmonyos/` with DevEco Studio and use the compatible SDK selected by the
+IDE. The `HarmonyOS CI` workflow downloads a pinned command-line toolchain,
+verifies its SHA-256 digest, installs dependencies, and builds unsigned HAP and
+APP artifacts named `BlueHotspot-harmonyos-unsigned`.
+
+This is build validation, not device validation: the client still needs
+on-device BLE testing, and its existing Hypium tests require a
+DevEco-compatible local or device test runtime. See
+[HarmonyOS reference notes](docs/harmonyos/README.md).
 
 ## Package identifiers
 
 - Android server: `io.github.mouse233.bluehotspot.server`
 - Android client: `io.github.mouse233.bluehotspot.client`
 - iOS client: `io.github.mouse233.bluehotspot.client.ios`
+- HarmonyOS NEXT client: `io.github.mouse233.bluehotspot.client.harmonyos`
 
 ## Repository layout
 
-- `android/` — Android server (`:server`) and Android controller client (`:client`) applications.
-- `ios/` — SwiftUI iOS controller and XcodeGen specification.
-- `harmonyos/` — native ArkTS/ArkUI HarmonyOS NEXT BLE controller client.
-- `protocol/` — platform-neutral BLE protocol and framing documentation.
-- `docs/` — architecture and project scope documentation.
+```text
+android/          Android server and Android controller client
+ios/              SwiftUI iOS controller and XcodeGen specification
+harmonyos/        ArkTS/ArkUI HarmonyOS NEXT controller (experimental)
+docs/protocol/    Platform-neutral BLE protocol specification
+docs/             Architecture, platform notes, and project specification
+.github/          GitHub Actions workflows and the HarmonyOS setup action
+```
 
-## Security and scope notes
+## Scope
 
-Version 1 uses an encrypted BLE link and encrypted GATT
-characteristic permissions as its authentication boundary. Full app-level
-identity management, trusted-peer revocation, challenge-response, and replay
-protection are reserved for a later iteration.
-
-The complete product vision may eventually include Internet connectivity
-verification, hotspot credential management, and broader tethering workflows.
-Those features are intentionally outside the current MVP.
+BlueHotspot is intentionally limited to remote control of an already-configured
+Android hotspot. Credential management, Wi-Fi configuration, SSID/password
+transport or storage, and unrelated tethering workflows are outside the MVP.

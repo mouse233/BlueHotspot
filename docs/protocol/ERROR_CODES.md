@@ -1,4 +1,6 @@
-# Protocol error codes
+# BlueHotspot protocol error codes
+
+These are canonical cross-platform protocol error names.
 
 ```text
 UNKNOWN

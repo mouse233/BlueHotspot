@@ -1,4 +1,6 @@
-# BlueHotspot UUIDs
+# BlueHotspot Protocol UUIDs
+
+These are canonical cross-platform protocol identifiers.
 
 These UUIDs are stable protocol identifiers and must not be scattered through
 platform source files.
