@@ -25,7 +25,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 concurrency:
-  group: harmonyos-${{ github.workflow }}-${{ github.ref }}
+  group: harmonyos-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
         with:
           version: 6.1.1.280
           tools-url: ${{ inputs.command_line_tools_url || 'https://huggingface.co/buckets/mouse233/harmonyos-commandline-tools-bucket/resolve/commandline-tools-linux-x64-6.1.1.280.zip?download=true' }}
-          sha256: f7ca54dd9b75b887865d8857621f0fb78f377f5a74181bc4ff40612c984c693a
+          sha256: b9caf7b73c541b90e6c8f3c7c3de7f2bea9b35e41e80cd3525f2f759ebf16cf4
 
       - name: Install HarmonyOS dependencies
         working-directory: harmonyos
