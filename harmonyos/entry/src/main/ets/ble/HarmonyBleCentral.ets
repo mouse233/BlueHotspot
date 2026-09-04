@@ -229,11 +229,12 @@ export class HarmonyBleCentral {
         this.eventCharacteristic = event;
         this.snapshot.connectionState = ConnectionState.Subscribing;
         this.notify();
-        client.setBLEMtuSize(REQUESTED_MTU).then((): void => {
+        try {
+          client.setBLEMtuSize(REQUESTED_MTU);
           this.mtu = REQUESTED_MTU;
-        }).catch((): void => {
+        } catch {
           this.mtu = DEFAULT_MTU;
-        });
+        }
         try {
           Promise.resolve(client.setCharacteristicChangeNotification(event, true))
             .then((): void => this.finishReady())
