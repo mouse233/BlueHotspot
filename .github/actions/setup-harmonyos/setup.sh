@@ -13,13 +13,24 @@ mkdir -p "$cache_root"
 hvigorw_path="$(find "$cache_root" -type f -path '*/bin/hvigorw' -print -quit)"
 if [[ -z "$hvigorw_path" ]]; then
   archive="$RUNNER_TEMP/harmony-command-line-tools-$HARMONY_TOOLS_VERSION.zip"
-  curl \
-    --fail \
-    --location \
-    --retry 5 \
-    --retry-all-errors \
-    --connect-timeout 30 \
-    --output "$archive" \
+  if ! command -v aria2c >/dev/null 2>&1; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq aria2
+  fi
+  aria2c \
+    --allow-overwrite=true \
+    --auto-file-renaming=false \
+    --continue=true \
+    --file-allocation=none \
+    --max-connection-per-server=16 \
+    --split=16 \
+    --min-split-size=1M \
+    --max-tries=5 \
+    --retry-wait=5 \
+    --timeout=60 \
+    --connect-timeout=30 \
+    --dir="$RUNNER_TEMP" \
+    --out="$(basename "$archive")" \
     "$HARMONY_TOOLS_URL"
 
   actual_sha256="$(sha256sum "$archive" | awk '{print $1}')"
