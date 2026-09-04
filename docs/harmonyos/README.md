@@ -55,5 +55,7 @@ later steps. The archive URL can be overridden with the
 `command_line_tools_url` input when starting `workflow_dispatch`.
 
 The workflow installs `ohpm` dependencies, builds the unsigned HAP and APP,
-runs the Hypium local tests with coverage, verifies expected output files, and
-uploads the unsigned HAP and APP artifacts.
+compiles the `ohosTest` unit-test target, verifies expected output files, and
+uploads the unsigned HAP and APP artifacts. Executing Hypium local tests
+requires a DevEco-compatible test runtime and remains a local or device-based
+validation step.

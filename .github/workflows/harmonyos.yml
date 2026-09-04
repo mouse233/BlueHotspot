@@ -68,11 +68,16 @@ jobs:
             -p buildMode=debug \
             assembleApp
 
-      - name: Run HarmonyOS unit tests
+      - name: Compile HarmonyOS unit test target
         working-directory: harmonyos
         run: |
           set -euo pipefail
-          "$HARMONY_HVIGORW" test -p module=entry -p coverage=true
+          "$HARMONY_HVIGORW" \
+            --mode module \
+            -p module=entry@ohosTest \
+            -p isOhosTest=true \
+            -p buildMode=test \
+            assembleHap
 
       - name: Verify build outputs
         working-directory: harmonyos
