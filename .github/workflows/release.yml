@@ -67,7 +67,7 @@ jobs:
             "release-assets/BlueHotspot-${GITHUB_REF_NAME}-ios-unsigned.ipa" Payload)
 
       - name: Upload iOS IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: BlueHotspot-unsigned-ipa
           path: ${{ runner.temp }}/release-assets/BlueHotspot-${{ github.ref_name }}-ios-unsigned.ipa
@@ -161,7 +161,7 @@ jobs:
           "$apksigner" verify --verbose "$signed_apk"
 
       - name: Upload Android APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: BlueHotspot-signed-apk-${{ matrix.app }}
           path: ${{ runner.temp }}/release-assets/BlueHotspot-${{ github.ref_name }}-android-${{ matrix.app }}-release.apk
