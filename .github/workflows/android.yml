@@ -52,13 +52,13 @@ jobs:
         run: gradle assembleDebug
 
       - name: Upload Android server APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: BlueHotspot-android-server-debug
           path: android/server/build/outputs/apk/debug/server-debug.apk
 
       - name: Upload Android client APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: BlueHotspot-android-client-debug
           path: android/client/build/outputs/apk/debug/client-debug.apk
