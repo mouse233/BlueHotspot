@@ -229,10 +229,8 @@ export class HarmonyBleCentral {
         this.eventCharacteristic = event;
         this.snapshot.connectionState = ConnectionState.Subscribing;
         this.notify();
-        client.setBLEMtu(REQUESTED_MTU).then((negotiated: number): void => {
-          if (negotiated > 0) {
-            this.mtu = negotiated;
-          }
+        client.setBLEMtuSize(REQUESTED_MTU).then((): void => {
+          this.mtu = REQUESTED_MTU;
         }).catch((): void => {
           this.mtu = DEFAULT_MTU;
         });
