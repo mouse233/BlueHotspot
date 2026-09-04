@@ -2,6 +2,7 @@ name: HarmonyOS CI
 
 on:
   push:
+    branches: [main]
     paths:
       - "harmonyos/**"
       - ".github/actions/setup-harmonyos/**"
