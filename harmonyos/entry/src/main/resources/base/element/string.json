@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "BlueHotspot HarmonyOS client"
+    },
+    {
+      "name": "entry_desc",
+      "value": "Controls a BlueHotspot Android server over Bluetooth LE"
+    },
+    {
+      "name": "bluetooth_permission_reason",
+      "value": "Bluetooth is required to discover and control BlueHotspot Android devices"
+    }
+  ]
+}

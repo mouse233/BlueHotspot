@@ -1,0 +1,91 @@
+name: HarmonyOS CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "harmonyos/**"
+      - ".github/actions/setup-harmonyos/**"
+      - ".github/workflows/harmonyos.yml"
+  pull_request:
+    paths:
+      - "harmonyos/**"
+      - ".github/actions/setup-harmonyos/**"
+      - ".github/workflows/harmonyos.yml"
+  workflow_dispatch:
+    inputs:
+      command_line_tools_url:
+        description: "Direct URL to the Huawei HarmonyOS Command Line Tools ZIP"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: harmonyos-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  harmonyos:
+    name: Build HarmonyOS app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Set up HarmonyOS command line tools
+        uses: ./.github/actions/setup-harmonyos
+        with:
+          version: 6.1.1.280
+          tools-url: ${{ inputs.command_line_tools_url || 'https://huggingface.co/buckets/mouse233/harmonyos-commandline-tools-bucket/resolve/commandline-tools-linux-x64-6.1.1.280.zip?download=true' }}
+          sha256: b9caf7b73c541b90e6c8f3c7c3de7f2bea9b35e41e80cd3525f2f759ebf16cf4
+
+      - name: Install HarmonyOS dependencies
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          "$HARMONY_OHPM" install
+
+      - name: Build unsigned HAP and APP
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          "$HARMONY_HVIGORW" \
+            --mode project \
+            -p product=default \
+            -p buildMode=debug \
+            assembleApp
+
+      - name: Verify build outputs
+        working-directory: harmonyos
+        run: |
+          set -euo pipefail
+          mapfile -t hap_files < <(find entry/build/default/outputs/default -maxdepth 1 -type f -name '*.hap')
+          mapfile -t app_files < <(find build/outputs/default -maxdepth 1 -type f -name '*.app')
+          if (( ${#hap_files[@]} == 0 || ${#app_files[@]} == 0 )); then
+            echo "Expected unsigned HAP and APP outputs were not produced." >&2
+            exit 1
+          fi
+          printf '%s\n' "${hap_files[@]}" "${app_files[@]}"
+
+      - name: Upload HarmonyOS artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: BlueHotspot-harmonyos-unsigned
+          path: |
+            harmonyos/entry/build/default/outputs/default/*.hap
+            harmonyos/build/outputs/default/*.app
+          if-no-files-found: error

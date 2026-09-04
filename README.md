@@ -13,6 +13,7 @@ The project is split into a hotspot server and controller clients.
 - Android server — runs on Android and controls the configured hotspot.
 - iOS client — controls an Android server over BLE.
 - Android client — controls an Android server over BLE.
+- HarmonyOS NEXT client — controls an Android server over BLE.
 
 ## Requirements
 
@@ -32,6 +33,12 @@ The project is split into a hotspot server and controller clients.
 ### iOS client
 
 - iOS 17 or newer.
+- Bluetooth permission.
+
+### HarmonyOS NEXT client
+
+- HarmonyOS NEXT / OpenHarmony phone or tablet with BLE support.
+- A current DevEco Studio and compatible HarmonyOS SDK.
 - Bluetooth permission.
 
 ## Version 1.1.0
@@ -70,6 +77,7 @@ signing workflow are configured.
 
 - `android/` — Android server (`:server`) and Android controller client (`:client`) applications.
 - `ios/` — SwiftUI iOS controller and XcodeGen specification.
+- `harmonyos/` — native ArkTS/ArkUI HarmonyOS NEXT BLE controller client.
 - `protocol/` — platform-neutral BLE protocol and framing documentation.
 - `docs/` — architecture and project scope documentation.
 
