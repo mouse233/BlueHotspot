@@ -57,6 +57,6 @@ dependencies {
     implementation(libs.shizuku.provider)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.10")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.4.20")
     testImplementation("junit:junit:4.13.2")
 }
